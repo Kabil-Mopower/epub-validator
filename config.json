@@ -15,7 +15,7 @@
     "endPunctuation": true,
     "ampersand": true,
     "hyphenSpace": false,
-    "numberHyphen": true,
+    "numberHyphen": false,
     "trailingSpace": true,
     "spaceAfterOpen": true,
     "spaceBeforeClose": true,
