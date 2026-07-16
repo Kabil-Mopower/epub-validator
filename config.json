@@ -14,7 +14,7 @@
     "capitalAfterP": true,
     "endPunctuation": true,
     "ampersand": true,
-    "hyphenSpace": true,
+    "hyphenSpace": false,
     "numberHyphen": true,
     "trailingSpace": true,
     "spaceAfterOpen": true,
