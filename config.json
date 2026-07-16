@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "firstTagMarginTop": true,
+    "fmtitleMargins": true,
+    "headingStyles": true,
+    "footnoteClasses": true,
+    "h1AuthorH2": true,
+    "h1AuthorP": true,
+    "h1H2": true,
+    "h1P": true,
+    "copyrightFontSize": true,
+    "doubleSpace": true,
+    "tabSpace": true,
+    "capitalAfterP": true,
+    "endPunctuation": true,
+    "ampersand": true,
+    "hyphenSpace": true,
+    "numberHyphen": true,
+    "trailingSpace": true,
+    "spaceAfterOpen": true,
+    "spaceBeforeClose": true,
+    "dotAfterClose": true,
+    "superscriptLink": true,
+    "pagebreakCheck": true,
+    "tableImage": true,
+    "referenceCheck": true,
+    "cssClassCheck": true,
+    "figureImage": true,
+    "crossRefLink": true,
+    "unwantedTag": true,
+    "imageNameCheck": true
+  }
+}

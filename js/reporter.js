@@ -1079,8 +1079,13 @@ function getPagebreakCount() {
   return val ? parseInt(val, 10) : null;
 }
 
+function isConfigRuleVisible(ruleName) {
+  const cfg = window.CONFIG_RULES;
+  return !(cfg && cfg[ruleName] === false);
+}
+
 function getActiveRuleNames() {
-  return QC_RULES.filter(r => isRuleEnabled(r.name)).map(r => r.name);
+  return QC_RULES.filter(r => isConfigRuleVisible(r.name) && isRuleEnabled(r.name)).map(r => r.name);
 }
 
 const QC_RULES = [
@@ -1140,7 +1145,7 @@ function renderRulesManager() {
   const toolbar = document.querySelector('.rules-toolbar');
   if (!list) return;
 
-  const rules = QC_RULES;
+  const rules = QC_RULES.filter(r => isConfigRuleVisible(r.name));
 
   if (toolbar) toolbar.hidden = false;
   ensureRulesContinueButton();

@@ -12,6 +12,32 @@ let folderUnlocked = false;
 let rulesUnlocked = false;
 let outputUnlocked = false;
 
+// ── Rule config (config.json) ──────────────────
+// config.json = developer control (permanent on/off, wins over localStorage).
+// Loaded once at startup; any rule set to false here is stripped out of
+// RULES entirely (never runs) and hidden from the Rules manager UI.
+window.CONFIG_RULES = {};
+
+async function loadRuleConfig() {
+  try {
+    const resp = await fetch('config.json');
+    if (!resp.ok) throw new Error('config.json not found');
+    const data = await resp.json();
+    window.CONFIG_RULES = (data && data.rules) || {};
+  } catch (err) {
+    // No config.json (e.g. running from local file) — default all rules on.
+    window.CONFIG_RULES = {};
+  }
+
+  for (let i = RULES.length - 1; i >= 0; i--) {
+    const ruleFn = RULES[i];
+    const name = ruleFn.ruleName || ruleFn.name;
+    if (window.CONFIG_RULES[name] === false) RULES.splice(i, 1);
+  }
+}
+
+const configReadyPromise = loadRuleConfig();
+
 // ── Theme ──────────────────────────────────────
 const themeToggle = document.getElementById('themeToggle');
 const htmlEl = document.documentElement;
@@ -163,7 +189,8 @@ folderInput.addEventListener('change', () => {
 });
 
 // ── Step navigation buttons ────────────────────
-nextToRulesBtn.addEventListener('click', () => {
+nextToRulesBtn.addEventListener('click', async () => {
+  await configReadyPromise;
   renderRulesManager();
   switchTab('rules');
 });
@@ -227,6 +254,8 @@ skipGroupingBtn.addEventListener('click', async () => {
 
 async function executeValidation() {
   if (!selectedFileList) return;
+
+  await configReadyPromise;
 
   runValidationBtn.disabled = true;
   skipGroupingBtn.disabled  = true;
