@@ -79,6 +79,7 @@ function validateFile(fileData) {
       unwantedTagRows: result.unwantedTagRows || [],
       figureImageRows: result.figureImageRows || [],
       crossRefRows: result.crossRefRows || [],
+      imageNameRows: result.imageNameRows || [],
       reason: result.reason || ""
     });
   }

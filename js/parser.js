@@ -758,6 +758,18 @@ function parseTrailingSpace(xhtmlText) {
     : /[\s\S]/.test(afterHtml);
 }
 
+function parseImageSrcs(xhtmlText) {
+  const srcs = [];
+  const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = imgRegex.exec(xhtmlText)) !== null) {
+    const src = match[1];
+    const filename = src.split('/').pop();
+    srcs.push(filename);
+  }
+  return srcs;
+}
+
 function parseXhtmlTitle(xhtmlText) {
   const match = xhtmlText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   return match ? match[1].trim() : '';

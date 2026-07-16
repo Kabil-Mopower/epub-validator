@@ -129,6 +129,7 @@ function buildRuleTable(result) {
         : r.name === 'referenceCheck' ? '&mdash; No reference tags found in this file'
         : r.name === 'cssClassCheck' ? '&mdash; No classes found in file'
         : r.name === 'figureImage' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No figure blocks found')
+        : r.name === 'imageNameCheck' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No images found')
         : 'Not applicable for this matter type';
       return `
         <div class="rule-group" data-rule-status="NA">
@@ -792,6 +793,35 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'imageNameCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">All image filenames match expected pattern and sequence</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.imageNameRows.filter(row => !row.pass).length} image name issue(s) found</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>Image File</th>
+                <th>Pattern</th>
+                <th>Sequence</th>
+                <th>Status</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.imageNameRows.map(row => `
+                <tr style="${row.pass ? '' : 'background:rgba(239,68,68,0.08);'}">
+                  <td>${escapeHtml(row.filename)}</td>
+                  <td class="${row.patternPass ? 'val-pass' : 'val-fail'}">${row.patternPass ? 'OK' : 'Mismatch'}</td>
+                  <td class="${row.sequenceIssue ? 'val-fail' : 'val-pass'}">${row.sequenceIssue ? 'Out of sequence' : (row.patternPass ? 'OK' : '—')}</td>
+                  <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
+                  <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'unwantedTag') {
       if (r.pass) {
         tableBody = `<p class="val-pass">No unwanted tags found</p>`;
@@ -1082,6 +1112,7 @@ const QC_RULES = [
   { name: 'figureImage',       label: 'Figure Image Check',                   applies: 'Body Matter only',           checks: 'pageavoid .fig blocks must have correctly styled image and caption paragraphs' },
   { name: 'crossRefLink',      label: 'Cross Reference Link Check',           applies: 'All matter types',           checks: 'Figure/Table/Chapter/Ref mentions must be wrapped in <a href>' },
   { name: 'unwantedTag',       label: 'Unwanted Tag Check',                   applies: 'All matter types',           checks: 'No empty tags, orphan closing tags, or unclosed tags' },
+  { name: 'imageNameCheck',    label: 'Image Name Check',                     applies: 'Body Matter only',           checks: 'Image filenames must match {chapter}-###.png and be sequential from 001' },
 ];
 
 function ensureRulesContinueButton() {

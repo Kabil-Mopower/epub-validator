@@ -2028,6 +2028,133 @@ function ruleUnwantedTag(fileData, cssRules) {
 }
 ruleUnwantedTag.ruleName = 'unwantedTag';
 
+function ruleImageNameCheck(fileData, cssRules) {
+
+  // Body matter only
+  if (fileData.matterType !== 'body') {
+    return {
+      name: 'imageNameCheck',
+      label: 'Image Name Check',
+      pass: true,
+      notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      imageNameRows: [],
+      reason: ''
+    };
+  }
+
+  const shortName = fileData.fileName.split('/').pop();
+  const base = shortName.replace(/\.[^.]+$/, '');
+
+  const images = fileData.imageSrcs || [];
+
+  if (images.length === 0) {
+    return {
+      name: 'imageNameCheck',
+      label: 'Image Name Check',
+      pass: true,
+      notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      imageNameRows: [],
+      reason: ''
+    };
+  }
+
+  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const namePattern = new RegExp(`^${escapedBase}-(\\d{3})\\.png$`);
+  const genericPattern = /^(.+)-(\d{3})\.png$/;
+
+  const rows = [];
+  let wrongNameCount = 0;
+
+  for (const filename of images) {
+    const m = filename.match(namePattern);
+    const patternPass = !!m;
+
+    if (!patternPass) {
+      const generic = filename.match(genericPattern);
+      const reason = (generic && generic[1] !== base)
+        ? `Image does not belong to this file: ${filename}`
+        : `Wrong image name: ${filename}`;
+      wrongNameCount++;
+      rows.push({
+        src: filename,
+        filename,
+        expectedBase: base,
+        patternPass: false,
+        sequenceIssue: false,
+        pass: false,
+        reason
+      });
+      continue;
+    }
+
+    rows.push({
+      src: filename,
+      filename,
+      expectedBase: base,
+      number: parseInt(m[1], 10),
+      patternPass: true,
+      sequenceIssue: false,
+      pass: true,
+      reason: ''
+    });
+  }
+
+  // Sequence check runs only over rows whose name pattern is valid.
+  const validRows = rows.filter(r => r.patternPass);
+  const numbers = validRows.map(r => r.number);
+  const sortedNumbers = [...numbers].sort((a, b) => a - b);
+
+  const maxNumber = sortedNumbers.length ? sortedNumbers[sortedNumbers.length - 1] : 0;
+  const numberSet = new Set(numbers);
+  const missingNumbers = [];
+  for (let n = 1; n <= maxNumber; n++) {
+    if (!numberSet.has(n)) missingNumbers.push(n);
+  }
+
+  let outOfOrderCount = 0;
+  const extraReasons = [];
+
+  if (missingNumbers.length > 0) {
+    for (const n of missingNumbers) {
+      extraReasons.push(`Missing image: ${base}-${String(n).padStart(3, '0')}.png`);
+    }
+  } else {
+    // No gaps — check that images appear in ascending order.
+    for (let i = 0; i < validRows.length; i++) {
+      if (numbers[i] !== sortedNumbers[i]) {
+        validRows[i].sequenceIssue = true;
+        validRows[i].pass = false;
+        validRows[i].reason = `Wrong order: ${validRows[i].filename} should come later`;
+        outOfOrderCount++;
+      }
+    }
+  }
+
+  const overallPass = wrongNameCount === 0 && missingNumbers.length === 0 && outOfOrderCount === 0;
+
+  const reasonParts = [];
+  if (wrongNameCount > 0) reasonParts.push(`${wrongNameCount} image(s) have wrong name`);
+  if (outOfOrderCount > 0) reasonParts.push(`${outOfOrderCount} image(s) are out of order`);
+  let reason = reasonParts.join(', ');
+  if (extraReasons.length) reason = reason ? `${reason}; ${extraReasons.join('; ')}` : extraReasons.join('; ');
+
+  return {
+    name: 'imageNameCheck',
+    label: 'Image Name Check',
+    pass: overallPass,
+    notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    imageNameRows: rows,
+    reason
+  };
+}
+ruleImageNameCheck.ruleName = 'imageNameCheck';
+
 ruleFirstTagMarginTop.ruleName = 'firstTagMarginTop';
 ruleFmtitleMargins.ruleName    = 'fmtitleMargins';
 ruleHeadingStyles.ruleName     = 'headingStyles';
@@ -2062,5 +2189,6 @@ const RULES = [
   ruleCssClassCheck,
   ruleFigureImage,
   ruleCrossRefLink,
-  ruleUnwantedTag
+  ruleUnwantedTag,
+  ruleImageNameCheck
 ];
