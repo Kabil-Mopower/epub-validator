@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<!-- EPUB XHTML Validator - main page -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EPUB XHTML Validator</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-kicker">PUBLISHER TOOLS</span>
+        <span class="brand-sub">Workspace</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="#" id="navEpubSelect" data-tab="epubSelect">
+          <span class="nav-icon">&#128193;</span>
+          <span class="nav-label">Epub Select</span>
+          <span class="nav-step">01</span>
+        </a>
+        <a class="nav-item nav-locked" href="#" id="navRules" data-tab="rules">
+          <span class="nav-icon">&#9776;</span>
+          <span class="nav-label">Rules</span>
+          <span class="nav-step">02</span>
+          <span class="nav-lock-icon"></span>
+        </a>
+        <a class="nav-item nav-locked" href="#" id="navReport" data-tab="report">
+          <span class="nav-icon icon-checkmark"></span>
+          <span class="nav-label">Validation Report</span>
+          <span class="nav-step">03</span>
+          <span class="nav-lock-icon"></span>
+        </a>
+        <a class="nav-item nav-locked" href="#" id="navOutput" data-tab="output">
+          <span class="nav-icon"></span>
+          <span class="nav-label">Output</span>
+          <span class="nav-step">04</span>
+          <span class="nav-lock-icon"></span>
+        </a>
+        <a class="nav-item nav-locked" href="#" id="navTagclass" data-tab="tagclass">
+          <span class="nav-icon"></span>
+          <span class="nav-label">Tag Index</span>
+          <span class="nav-step">05</span>
+          <span class="nav-lock-icon"></span>
+        </a>
+        <a class="nav-item nav-locked" href="#" id="navPagebreak" data-tab="pagebreak" style="display:none;">
+          <span class="nav-icon"></span>
+          <span class="nav-label">Pagebreak Check</span>
+          <span class="nav-step">06</span>
+          <span class="nav-lock-icon"></span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-title">EPUB Validator</div>
+        <div class="sidebar-footer-copy">&copy; 2026 All rights reserved.</div>
+      </div>
+    </aside>
+
+    <div class="main-col">
+
+      <header class="app-header">
+        <div class="header-text">
+          <h1>EPUB XHTML Validator</h1>
+          <span id="lastModifiedStamp" class="last-modified-stamp"></span>
+        </div>
+        <button id="themeToggle" title="Toggle dark mode">
+          <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </header>
+
+      <main class="container">
+
+      <!-- STEP 1: EPUB SELECT -->
+      <div id="tabEpubSelect" class="tab-pane active-pane">
+        <div class="step-header">
+          <div class="step-number">01</div>
+          <div class="step-info">
+            <h2 class="step-title">Select Folder</h2>
+            <p class="step-subtitle">Select the folder containing xhtml/ and styles/ subfolders</p>
+          </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">&#128193;</div>
+          <div class="upload-text">Click to select folder</div>
+          <div class="upload-hint">or drag and drop your folder here &mdash; expects xhtml/ and styles/ subfolders</div>
+          <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
+        </div>
+
+        <div id="folderInfoCard" class="folder-info-card" hidden>
+          <div class="folder-info-icon">&#128193;</div>
+          <div class="folder-info-details">
+            <div id="folderName" class="folder-info-name"></div>
+            <div id="folderMeta" class="folder-info-meta"></div>
+          </div>
+          <button class="btn primary small" id="changeFolderBtn">Change</button>
+        </div>
+
+        <div class="step-actions">
+          <button id="nextToRulesBtn" class="btn success step-next-btn" disabled>
+            Next: Configure Rules
+            <span class="btn-arrow">&#8594;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: RULES -->
+      <div id="tabRules" class="tab-pane" hidden>
+        <div class="step-header">
+          <div class="step-number">02</div>
+          <div class="step-info">
+            <h2 class="step-title">Configure Rules</h2>
+            <p class="step-subtitle">Enable or disable validation rules before running</p>
+          </div>
+        </div>
+
+        <div class="rules-toolbar">
+          <button id="enableAllRulesBtn" class="btn primary small">Enable All</button>
+          <button id="disableAllRulesBtn" class="btn primary small">Disable All</button>
+        </div>
+
+        <div id="rulesManagerList" class="rules-manager-list"></div>
+
+        <div class="step-actions">
+          <button id="backToEpubBtn" class="btn primary step-back-btn">
+            <span class="btn-arrow">&#8592;</span>
+            Back
+          </button>
+          <button id="continueToReportBtn" class="btn success step-next-btn">
+            Continue to Validation
+            <span class="btn-arrow">&#8594;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: VALIDATION REPORT -->
+      <div id="tabReport" class="tab-pane" hidden>
+        <div class="step-header">
+          <div class="step-number">03</div>
+          <div class="step-info">
+            <h2 class="step-title">Validation Report</h2>
+            <p class="step-subtitle">Group files and run validation</p>
+          </div>
+          <div class="step-header-actions">
+            <button id="output-btn" class="btn primary">
+              Output
+            </button>
+            <button id="revalidateBtn" class="btn success" hidden>
+              &#8635; Revalidate
+            </button>
+          </div>
+        </div>
+
+        <section id="bucketingSection" class="bucketing-section" hidden>
+          <div class="report-heading">
+            <span class="report-title">Group XHTML Files by Matter Type</span>
+            <span class="report-meta">Drag chips into Front / Body / End Matter</span>
+          </div>
+
+          <div class="bucket-pool-wrap">
+            <div class="bucket-zone-label">Unassigned</div>
+            <div id="poolUnassigned" class="bucket-zone pool-zone" data-zone="unassigned"></div>
+          </div>
+
+          <div class="bucket-zones">
+            <div class="bucket-col">
+              <div class="bucket-zone-label front">Front Matter</div>
+              <div id="zoneFront" class="bucket-zone front-zone" data-zone="front"></div>
+            </div>
+            <div class="bucket-col">
+              <div class="bucket-zone-label body">Body Matter</div>
+              <div id="zoneBody" class="bucket-zone body-zone" data-zone="body"></div>
+            </div>
+            <div class="bucket-col">
+              <div class="bucket-zone-label end">End Matter</div>
+              <div id="zoneEnd" class="bucket-zone end-zone" data-zone="end"></div>
+            </div>
+          </div>
+
+          <div class="bucket-isolate-wrap">
+            <div class="bucket-zone-label isolate">Isolate Matter — files here will be skipped</div>
+            <div id="zoneIsolate" class="bucket-zone isolate-zone" data-zone="isolate"></div>
+          </div>
+
+          <div class="bucket-actions">
+            <button id="runValidationBtn" class="btn success" disabled>&gt; Run Validation</button>
+            <button id="skipGroupingBtn" class="btn primary">Skip grouping / validate all</button>
+          </div>
+        </section>
+
+        <section id="summarySection" class="summary-card" hidden>
+          <div class="summary-item">
+            <span id="summaryTotal" class="summary-value">0</span>
+            <span class="summary-label">Total Files</span>
+          </div>
+          <div class="summary-item pass">
+            <span id="summaryPass" class="summary-value">0</span>
+            <span class="summary-label">Passed</span>
+          </div>
+          <div class="summary-item fail">
+            <span id="summaryFail" class="summary-value">0</span>
+            <span class="summary-label">Failed</span>
+          </div>
+          <div id="matterBreakdown" class="summary-item matter-breakdown"></div>
+        </section>
+
+        <section class="report-section">
+          <div id="reportToolbar" class="report-toolbar" hidden>
+            <div class="filter-bar">
+              <button type="button" class="filter-toggle active" data-filter="front">Front Matter</button>
+              <button type="button" class="filter-toggle active" data-filter="body">Body Matter</button>
+              <button type="button" class="filter-toggle active" data-filter="end">End Matter</button>
+              <button type="button" class="filter-toggle fail-toggle" data-filter="failOnly">FAIL only</button>
+            </div>
+            <div class="search-bar">
+              <input type="text" id="searchInput" class="search-input" placeholder="Search by filename...">
+              <button type="button" id="searchClearBtn" class="search-clear" hidden title="Clear search">&#10005;</button>
+            </div>
+          </div>
+          <div id="cardList" class="card-list" hidden></div>
+          <p id="statusMessage" class="status-message">Select a folder to begin.</p>
+        </section>
+      </div>
+
+      <!-- STEP 4: OUTPUT -->
+      <div id="tabOutput" class="tab-pane" hidden>
+        <div class="step-header">
+          <div class="step-number">04</div>
+          <div class="step-info">
+            <h2 class="step-title">Output</h2>
+            <p class="step-subtitle">Validation rule summary</p>
+          </div>
+        </div>
+
+        <div class="filter-bar output-filter-bar" id="outputFilterBar">
+          <button type="button" class="filter-toggle active" data-output-filter="all">All</button>
+          <button type="button" class="filter-toggle" data-output-filter="fail">Fail Only</button>
+          <button type="button" class="filter-toggle" data-output-filter="warning">Warning Only</button>
+        </div>
+
+        <div id="output-panel-content"></div>
+      </div>
+
+      <!-- STEP 5: TAG INDEX -->
+      <div id="tabTagclass" class="tab-pane" hidden>
+        <div class="step-header">
+          <div class="step-number">05</div>
+          <div class="step-info">
+            <h2 class="step-title">Tag Index</h2>
+            <p class="step-subtitle">Tag &rarr; class usage across all validated files</p>
+          </div>
+        </div>
+
+        <div id="tagclass-panel-content"></div>
+      </div>
+
+      <!-- STEP 6: PAGEBREAK CHECK (Full EPUB) -->
+      <div id="tabPagebreak" class="tab-pane" hidden>
+        <div class="step-header">
+          <div class="step-number">06</div>
+          <div class="step-info">
+            <h2 class="step-title">Pagebreak Check</h2>
+            <p class="step-subtitle">Full EPUB pagebreak sequence check across all files</p>
+          </div>
+        </div>
+
+        <div id="pagebreak-panel-content"></div>
+      </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <div id="cssModal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title" id="cssModalSelector"></span>
+        <button class="modal-close" id="cssModalCloseBtn">&#10005;</button>
+      </div>
+      <pre class="modal-css-block"><code id="cssModalBlock"></code></pre>
+    </div>
+  </div>
+
+  <div id="copyrightModal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title"><span class="status-warning">WARN</span> Copyright File Warning</span>
+      </div>
+      <div class="modal-body-text" id="copyrightModalMessage"></div>
+      <div class="modal-footer">
+        <button id="copyrightProceedBtn" class="btn success">Proceed</button>
+        <button id="copyrightCancelBtn" class="btn primary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rule-detail-modal" class="rule-modal-overlay hidden">
+    <div class="rule-modal-box">
+      <div class="rule-modal-header">
+        <span id="rule-modal-title"></span>
+        <button id="rule-modal-close">&#10005;</button>
+      </div>
+      <div id="rule-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="output-sidebar" class="output-sidebar hidden">
+    <div class="output-sidebar-header">
+      <h3>Output</h3>
+      <button id="close-sidebar">&#10005;</button>
+    </div>
+    <div id="output-sidebar-content"></div>
+  </div>
+
+  <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+  <div id="pagebreak-modal" class="modal-overlay" hidden>
+    <div class="modal-box" style="max-width:420px;width:90%;box-sizing:border-box;overflow:hidden;">
+      <h3>Pagebreak Check</h3>
+      <p>Enter the total number of pages in this EPUB:</p>
+      <input type="number" id="pagebreak-count" min="1" placeholder="e.g. 10" style="width:100%;box-sizing:border-box;"/>
+      <p id="pagebreak-error" class="rule-fail-text" hidden>Please enter a valid number</p>
+      <label style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;cursor:pointer;width:100%;box-sizing:border-box;">
+        <input type="checkbox" id="pagebreak-full-epub" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;">
+        <span style="font-size:0.875rem;line-height:1.4;flex:1;">Full EPUB — check pagebreak continuity across all files in order</span>
+      </label>
+      <p id="pagebreak-multi-warn" hidden style="font-size:0.8rem;color:orange;margin-top:8px;">
+        &#9888; Multiple files detected. Enable "Full EPUB" for accurate pagebreak check.
+      </p>
+      <div class="modal-buttons" style="margin-top:16px;">
+        <button id="pagebreak-cancel">Cancel</button>
+        <button id="pagebreak-confirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cursorTooltip" class="cursor-tooltip">
+    <span id="cursorTooltipText">EPUB Validator</span>
+  </div>
+
+  <!-- Load modules in dependency order -->
+  <script src="js/rules.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/validator.js"></script>
+  <script src="js/reporter.js"></script>
+  <script src="js/bucketing.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
