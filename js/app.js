@@ -376,6 +376,7 @@ async function runValidation(fileList) {
     const crossRefHits = parseCrossRefs(xhtmlText);
     const imageSrcs = parseImageSrcs(xhtmlText);
     const anchorTexts = parseAnchorTexts(xhtmlText);
+    const stylesheetLink = parseStylesheetLink(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
     const hasTrailingSpace = parseTrailingSpace(xhtmlText);
     const trailingSpaceContent = xhtmlText.slice(
@@ -414,6 +415,7 @@ async function runValidation(fileList) {
       crossRefHits,
       imageSrcs,
       anchorTexts,
+      stylesheetLink,
       emptyTags,
       orphanClose,
       unclosedTags,

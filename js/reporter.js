@@ -148,7 +148,22 @@ function buildRuleTable(result) {
     // Build mini table rows based on rule type
     let tableBody = '';
 
-    if (r.name === 'headingStyles' && r.headingRows && r.headingRows.length > 0) {
+    if (r.name === 'stylesheetLinkCheck') {
+      if (r.pass) {
+        tableBody = `<p style="color:var(--pass);font-weight:600;padding:0.75rem 1.2rem;">&#10003; Correct stylesheet link found.</p>`;
+      } else {
+        tableBody = `
+          <div style="padding:0.75rem 1.2rem;">
+            <p style="color:var(--fail);font-weight:600;margin-bottom:0.5rem;">&#10007; ${escapeHtml(r.reason)}</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);">Expected:
+              <code style="color:var(--accent);">&lt;link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/&gt;</code>
+            </p>
+            ${r.actual ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Found:
+              <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
+            </p>` : ''}
+          </div>`;
+      }
+    } else if (r.name === 'headingStyles' && r.headingRows && r.headingRows.length > 0) {
       // Multiple rows — one per unique heading
       const visibleRows = r.headingRows.filter(h => !h.notApplicable && !/skipped/i.test(h.reason || ''));
 
@@ -1101,6 +1116,7 @@ function getActiveRuleNames() {
 }
 
 const QC_RULES = [
+  { name: 'stylesheetLinkCheck', label: 'Stylesheet Link Check',                applies: 'All files',                  checks: 'Verifies that the XHTML file contains exactly: <link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/>. FAILs if missing or different.' },
   { name: 'firstTagMarginTop', label: 'First Tag Margin Top',                applies: 'All matter types',           checks: 'First tag after <body> must have margin-top: 1em' },
   { name: 'fmtitleMargins',    label: 'FM Title Margins',                     applies: 'Front Matter only',          checks: 'fmtitle* class: margin-top 1em, margin-bottom 2em' },
   { name: 'headingStyles',     label: 'Heading Styles',                       applies: 'All matter types',           checks: 'h2/h3/h4/h5 margin and font-size checks' },

@@ -1,5 +1,6 @@
 {
   "rules": {
+    "stylesheetLinkCheck": true,
     "firstTagMarginTop": true,
     "fmtitleMargins": true,
     "headingStyles": true,

@@ -775,6 +775,41 @@ function parseXhtmlTitle(xhtmlText) {
   return match ? match[1].trim() : '';
 }
 
+function parseStylesheetLink(xhtmlText) {
+  // Extract all <link .../> tags from <head>
+  const headMatch = xhtmlText.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (!headMatch) return { found: false, actual: null };
+
+  const headContent = headMatch[1];
+  const linkRegex = /<link\s([^>]*?)\/>/gi;
+  let m;
+  const links = [];
+
+  while ((m = linkRegex.exec(headContent)) !== null) {
+    const attrs = m[1];
+    const rel   = (attrs.match(/rel\s*=\s*["']([^"']*)["']/i)  || [])[1] || '';
+    const type  = (attrs.match(/type\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
+    const href  = (attrs.match(/href\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
+    if (rel === 'stylesheet') {
+      links.push({ rel, type, href, raw: m[0].trim() });
+    }
+  }
+
+  if (links.length === 0) return { found: false, actual: null };
+
+  const expected = '../styles/stylesheet.css';
+  const match = links.find(l =>
+    l.rel  === 'stylesheet' &&
+    l.type === 'text/css'  &&
+    l.href === expected
+  );
+
+  return {
+    found: !!match,
+    actual: links[0].raw
+  };
+}
+
 function parseAnchorTexts(xhtmlText) {
   const hits = [];
   const cleaned = xhtmlText.replace(/<a\s[^>]*\/>/gi, '');

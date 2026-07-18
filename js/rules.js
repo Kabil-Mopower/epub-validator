@@ -2170,6 +2170,22 @@ function ruleAnchorTextDisplay(fileData) {
 }
 ruleAnchorTextDisplay.ruleName = 'anchorTextDisplay';
 
+function ruleStylesheetLinkCheck(fileData) {
+  const result = fileData.stylesheetLink || { found: false, actual: null };
+  return {
+    name: 'stylesheetLinkCheck',
+    label: 'Stylesheet Link Check',
+    pass: result.found,
+    reason: result.found
+      ? 'Stylesheet link is correct.'
+      : result.actual
+        ? `Incorrect stylesheet link found: ${result.actual}`
+        : 'Stylesheet <link> tag is missing from <head>.',
+    actual: result.actual
+  };
+}
+ruleStylesheetLinkCheck.ruleName = 'stylesheetLinkCheck';
+
 ruleFirstTagMarginTop.ruleName = 'firstTagMarginTop';
 ruleFmtitleMargins.ruleName    = 'fmtitleMargins';
 ruleHeadingStyles.ruleName     = 'headingStyles';
@@ -2208,3 +2224,4 @@ const RULES = [
   ruleImageNameCheck
 ];
 RULES.push(ruleAnchorTextDisplay);
+RULES.unshift(ruleStylesheetLinkCheck);
