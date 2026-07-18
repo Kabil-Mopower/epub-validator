@@ -2156,16 +2156,16 @@ function ruleImageNameCheck(fileData, cssRules) {
 ruleImageNameCheck.ruleName = 'imageNameCheck';
 
 function ruleAnchorTextDisplay(fileData) {
-  const texts = fileData.anchorTexts || [];
+  const anchors = fileData.anchorTexts || [];
   return {
     name: 'anchorTextDisplay',
     label: 'Anchor Text Display',
     pass: true,
-    notApplicable: texts.length === 0,
-    reason: texts.length === 0
+    notApplicable: anchors.length === 0,
+    reason: anchors.length === 0
       ? 'No anchor tags found in this file.'
-      : `${texts.length} anchor text(s) found.`,
-    anchorTexts: texts
+      : `${anchors.length} anchor(s) found.`,
+    anchorTexts: anchors
   };
 }
 ruleAnchorTextDisplay.ruleName = 'anchorTextDisplay';

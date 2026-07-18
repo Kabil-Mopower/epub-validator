@@ -900,7 +900,12 @@ function buildRuleTable(result) {
       if (!r.anchorTexts || r.anchorTexts.length === 0) {
         tableBody = `<p class="rule-na-text">No anchor texts found.</p>`;
       } else {
-        tableBody = `<ol class="anchor-text-list">${r.anchorTexts.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ol>`;
+        const items = r.anchorTexts.map((a, i) => `
+          <li style="margin-bottom:10px;">
+            <span style="font-weight:700;font-size:1rem;">${i + 1}. ${escapeHtml(a.text)}</span>
+            <span style="color:var(--accent);margin-left:12px;font-family:monospace;font-size:0.95rem;">${escapeHtml(a.href)}</span>
+          </li>`).join('');
+        tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
       }
     } else {
       // Single row rule
