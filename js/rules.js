@@ -2155,6 +2155,21 @@ function ruleImageNameCheck(fileData, cssRules) {
 }
 ruleImageNameCheck.ruleName = 'imageNameCheck';
 
+function ruleAnchorTextDisplay(fileData) {
+  const texts = fileData.anchorTexts || [];
+  return {
+    name: 'anchorTextDisplay',
+    label: 'Anchor Text Display',
+    pass: true,
+    notApplicable: texts.length === 0,
+    reason: texts.length === 0
+      ? 'No anchor tags found in this file.'
+      : `${texts.length} anchor text(s) found.`,
+    anchorTexts: texts
+  };
+}
+ruleAnchorTextDisplay.ruleName = 'anchorTextDisplay';
+
 ruleFirstTagMarginTop.ruleName = 'firstTagMarginTop';
 ruleFmtitleMargins.ruleName    = 'fmtitleMargins';
 ruleHeadingStyles.ruleName     = 'headingStyles';
@@ -2192,3 +2207,4 @@ const RULES = [
   ruleUnwantedTag,
   ruleImageNameCheck
 ];
+RULES.push(ruleAnchorTextDisplay);

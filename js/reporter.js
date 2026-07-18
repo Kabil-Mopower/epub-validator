@@ -130,6 +130,7 @@ function buildRuleTable(result) {
         : r.name === 'cssClassCheck' ? '&mdash; No classes found in file'
         : r.name === 'figureImage' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No figure blocks found')
         : r.name === 'imageNameCheck' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No images found')
+        : r.name === 'anchorTextDisplay' ? '&mdash; No anchor tags found'
         : 'Not applicable for this matter type';
       return `
         <div class="rule-group" data-rule-status="NA">
@@ -895,6 +896,12 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'anchorTextDisplay') {
+      if (!r.anchorTexts || r.anchorTexts.length === 0) {
+        tableBody = `<p class="rule-na-text">No anchor texts found.</p>`;
+      } else {
+        tableBody = `<ol class="anchor-text-list">${r.anchorTexts.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ol>`;
+      }
     } else {
       // Single row rule
       tableBody = `
@@ -1118,6 +1125,7 @@ const QC_RULES = [
   { name: 'crossRefLink',      label: 'Cross Reference Link Check',           applies: 'All matter types',           checks: 'Figure/Table/Chapter/Ref mentions must be wrapped in <a href>' },
   { name: 'unwantedTag',       label: 'Unwanted Tag Check',                   applies: 'All matter types',           checks: 'No empty tags, orphan closing tags, or unclosed tags' },
   { name: 'imageNameCheck',    label: 'Image Name Check',                     applies: 'Body Matter only',           checks: 'Image filenames must match {chapter}-###.png and be sequential from 001' },
+  { name: 'anchorTextDisplay', label: 'Anchor Text Display',                  applies: 'All matter types',           checks: 'Displays the inner text of every <a> tag as a numbered list. Pagebreak markers are ignored. Informational only — always PASS.' },
 ];
 
 function ensureRulesContinueButton() {

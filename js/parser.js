@@ -774,3 +774,20 @@ function parseXhtmlTitle(xhtmlText) {
   const match = xhtmlText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   return match ? match[1].trim() : '';
 }
+
+function parseAnchorTexts(xhtmlText) {
+  const hits = [];
+  // Remove self-closing <a .../> tags first (e.g. pagebreak markers)
+  const cleaned = xhtmlText.replace(/<a\s[^>]*\/>/gi, '');
+  const re = /<a\s([^>]*)>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    const attrs = m[1];
+    // extra safety — skip if id starts with pagebreak
+    const idM = attrs.match(/id\s*=\s*["']([^"']*)["']/i);
+    if (idM && idM[1].toLowerCase().startsWith('pagebreak')) continue;
+    const text = m[2].replace(/<[^>]+>/g, '').trim();
+    if (text) hits.push(text);
+  }
+  return hits;
+}

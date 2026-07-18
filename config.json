@@ -28,6 +28,7 @@
     "figureImage": true,
     "crossRefLink": true,
     "unwantedTag": true,
-    "imageNameCheck": true
+    "imageNameCheck": true,
+    "anchorTextDisplay": true
   }
 }

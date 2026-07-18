@@ -375,6 +375,7 @@ async function runValidation(fileList) {
     const figureBlocks = parseFigureBlocks(xhtmlText);
     const crossRefHits = parseCrossRefs(xhtmlText);
     const imageSrcs = parseImageSrcs(xhtmlText);
+    const anchorTexts = parseAnchorTexts(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
     const hasTrailingSpace = parseTrailingSpace(xhtmlText);
     const trailingSpaceContent = xhtmlText.slice(
@@ -412,6 +413,7 @@ async function runValidation(fileList) {
       figureBlocks,
       crossRefHits,
       imageSrcs,
+      anchorTexts,
       emptyTags,
       orphanClose,
       unclosedTags,
