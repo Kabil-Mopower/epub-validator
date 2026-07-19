@@ -57,9 +57,33 @@ function renderSummary(results) {
     const groupResults = results.filter(r => r.matterType === group);
     const groupPassed = groupResults.filter(r => r.status === "PASS").length;
     return `<span class="matter-breakdown-item matter-${group}">${MATTER_LABELS[group]} (${groupPassed}/${groupResults.length})</span>`;
-  }).join("");
+  }).join("") + `
+    <span class="expand-collapse-controls">
+      <button id="expandAllBtn" onclick="expandAllCards()">&#8862; Expand All</button>
+      <button id="collapseAllBtn" onclick="collapseAllCards()">&#8863; Collapse All</button>
+    </span>`;
 
   summarySection.hidden = false;
+}
+
+function expandAllCards() {
+  document.querySelectorAll('.card-body, .rule-body').forEach(el => {
+    el.hidden = false;
+  });
+  document.querySelectorAll('.result-card').forEach(card => {
+    card.classList.add('expanded');
+    card.classList.remove('collapsed');
+  });
+}
+
+function collapseAllCards() {
+  document.querySelectorAll('.card-body, .rule-body').forEach(el => {
+    el.hidden = true;
+  });
+  document.querySelectorAll('.result-card').forEach(card => {
+    card.classList.add('collapsed');
+    card.classList.remove('expanded');
+  });
 }
 
 /**
@@ -113,9 +137,25 @@ function buildPagebreakOrderDisplay(r) {
     </div>`;
 }
 
+function buildFixedCheckbox(fileName, ruleName) {
+  return `
+      <label class="fixed-label" onclick="event.stopPropagation()">
+        <input
+          type="checkbox"
+          class="fixed-checkbox"
+          data-file="${escapeHtml(fileName)}"
+          data-rule="${escapeHtml(ruleName)}"
+          onchange="handleFixedChange(this)"
+        />
+        <span class="fixed-text">Mark as Fixed</span>
+      </label>`;
+}
+
 function buildRuleTable(result) {
   const rules = result.ruleResults || [];
   if (rules.length === 0) return `<p class="status-message">No rules configured.</p>`;
+
+  const fileName = shortFileName(result.fileName);
 
   return rules.map((r, index) => {
     if (r.name === 'pagebreakCheck' && window.fullEpubPagebreak) {
@@ -922,6 +962,43 @@ function buildRuleTable(result) {
           </li>`).join('');
         tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
       }
+    } else if (r.name === 'titleConsistencyCheck') {
+      if (r.pass) {
+        tableBody = `
+          <div style="padding:0.75rem 1.2rem;">
+            <p style="color:var(--pass);font-weight:600;">
+              &#10003; Title matches: <span style="font-style:italic;">"${escapeHtml(r.title)}"</span>
+            </p>
+          </div>`;
+      } else if (r.warning) {
+        tableBody = `
+          <div style="padding:0.75rem 1.2rem;">
+            <p style="color:var(--warning);font-weight:600;margin-bottom:0.5rem;">
+              &#9888; Title mismatch detected
+            </p>
+            <table class="rule-mini-table" style="width:100%;">
+              <thead><tr>
+                <th>This File's Title</th>
+                <th>Expected Title</th>
+              </tr></thead>
+              <tbody><tr>
+                <td style="color:var(--warning);font-weight:600;">
+                  "${escapeHtml(r.title)}"
+                </td>
+                <td style="color:var(--pass);">
+                  "${escapeHtml(r.expectedTitle)}"
+                </td>
+              </tr></tbody>
+            </table>
+          </div>`;
+      } else {
+        tableBody = `
+          <div style="padding:0.75rem 1.2rem;">
+            <p style="color:var(--fail);font-weight:600;">
+              &#10007; ${escapeHtml(r.reason)}
+            </p>
+          </div>`;
+      }
     } else {
       // Single row rule
       tableBody = `
@@ -970,6 +1047,7 @@ function buildRuleTable(result) {
           <span class="rule-number">${ruleNumber}.</span>
           <span class="rule-badge">${escapeHtml(r.label)}</span>
           <span class="rule-group-status ${headerIsWarning ? 'warn' : r.pass ? 'pass' : 'fail'}">${headerIsWarning ? 'WARN' : r.pass ? 'PASS' : 'FAIL'}</span>
+          ${(!r.pass && !r.notApplicable) ? buildFixedCheckbox(fileName, r.name) : ''}
         </div>
         <div class="rule-group-body">
           ${tableBody}
@@ -990,7 +1068,7 @@ function createResultCard(result) {
   const badgeText = isWarning ? "WARNING" : result.status;
 
   const card = document.createElement("div");
-  card.className = `result-card ${isFail || isWarning ? "expanded" : ""}`;
+  card.className = "result-card collapsed";
   card.dataset.fileName = result.fileName.toLowerCase();
   card.dataset.matterType = result.matterType;
   card.dataset.status = result.status;
@@ -999,11 +1077,11 @@ function createResultCard(result) {
     <button type="button" class="card-header">
       <span class="chevron">&#9656;</span>
       <span class="card-filename">${escapeHtml(result.fileName)}</span>
-      ${result.title ? `<span class="card-title">"${escapeHtml(result.title)}"</span>` : ''}
+      ${result.title ? `<span class="card-title${result.title !== result.expectedTitle ? ' title-mismatch' : ''}">"${escapeHtml(result.title)}"</span>` : ''}
       <span class="matter-tag matter-${result.matterType}">${escapeHtml(matterLabel)}</span>
       <span class="status-badge ${badgeClass}">${badgeText}</span>
     </button>
-    <div class="card-body" ${isFail || isWarning ? "" : "hidden"}>
+    <div class="card-body" hidden>
       ${buildRuleTable(result)}
     </div>
   `;
@@ -1012,6 +1090,7 @@ function createResultCard(result) {
   header.addEventListener("click", () => {
     const body = card.querySelector(".card-body");
     const isExpanded = card.classList.toggle("expanded");
+    card.classList.toggle("collapsed", !isExpanded);
     body.hidden = !isExpanded;
   });
 
@@ -1062,6 +1141,8 @@ function renderCardList() {
 
   cardList.hidden = false;
   toolbar.hidden = false;
+
+  if (typeof restoreFixedStates === 'function') restoreFixedStates();
 }
 
 /**
@@ -1147,6 +1228,7 @@ const QC_RULES = [
   { name: 'unwantedTag',       label: 'Unwanted Tag Check',                   applies: 'All matter types',           checks: 'No empty tags, orphan closing tags, or unclosed tags' },
   { name: 'imageNameCheck',    label: 'Image Name Check',                     applies: 'Body Matter only',           checks: 'Image filenames must match {chapter}-###.png and be sequential from 001' },
   { name: 'anchorTextDisplay', label: 'Anchor Text Display',                  applies: 'All matter types',           checks: 'Displays the inner text of every <a> tag as a numbered list. Pagebreak markers are ignored. Informational only — always PASS.' },
+  { name: 'titleConsistencyCheck', label: 'Title Consistency Check',          applies: 'All files',                  checks: 'Checks that every XHTML file has a <title> tag matching the most common title across all files. FAIL if missing, WARNING if different.' },
 ];
 
 function ensureRulesContinueButton() {

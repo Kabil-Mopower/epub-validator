@@ -2325,3 +2325,117 @@ body {
 .rule-modal-table tr:hover td {
   background: var(--bg-secondary);
 }
+
+/* Mark as Fixed checkbox */
+.fixed-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-left: 12px;
+  user-select: none;
+}
+
+.fixed-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: #16A34A;
+  cursor: pointer;
+}
+
+.fixed-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.fixed-checkbox:checked + .fixed-text {
+  color: #16A34A;
+}
+
+/* Rule fixed state */
+.rule-fixed {
+  opacity: 0.4;
+  position: relative;
+  transition: opacity 0.2s;
+}
+
+.rule-fixed::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  right: 1rem;
+  height: 1.5px;
+  background: #16A34A;
+  pointer-events: none;
+}
+
+/* Clear All Fixed button */
+.clear-fixed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #DC2626;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  width: fit-content;
+  margin-bottom: 0;
+}
+
+.clear-fixed-btn:hover {
+  background: #DC2626;
+  color: white;
+}
+
+.file-title {
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #888;
+  font-style: italic;
+}
+
+.title-mismatch {
+  color: var(--fail) !important;
+  font-weight: 700;
+  text-decoration: underline wavy var(--fail);
+}
+
+.title-missing {
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+
+.expand-collapse-controls {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+#expandAllBtn, #collapseAllBtn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 0.28rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#expandAllBtn:hover, #collapseAllBtn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}

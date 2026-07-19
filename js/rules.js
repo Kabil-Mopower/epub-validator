@@ -2192,6 +2192,49 @@ ruleHeadingStyles.ruleName     = 'headingStyles';
 ruleFootnoteClasses.ruleName   = 'footnoteClasses';
 ruleCopyrightFontSize.ruleName = 'copyrightFontSize';
 
+function ruleTitleConsistencyCheck(fileData) {
+  const title         = (fileData.title || '').trim();
+  const expectedTitle = (fileData.expectedTitle || '').trim();
+
+  // Missing or empty title → FAIL
+  if (!title) {
+    return {
+      name: 'titleConsistencyCheck',
+      label: 'Title Consistency Check',
+      pass: false,
+      warning: false,
+      title,
+      expectedTitle,
+      reason: '<title> tag is missing or empty.'
+    };
+  }
+
+  // Title differs from expected → WARNING
+  if (title !== expectedTitle) {
+    return {
+      name: 'titleConsistencyCheck',
+      label: 'Title Consistency Check',
+      pass: false,
+      warning: true,
+      title,
+      expectedTitle,
+      reason: `Title differs from expected. Expected: "${expectedTitle}"`
+    };
+  }
+
+  // All good → PASS
+  return {
+    name: 'titleConsistencyCheck',
+    label: 'Title Consistency Check',
+    pass: true,
+    warning: false,
+    title,
+    expectedTitle,
+    reason: 'Title matches across all files.'
+  };
+}
+ruleTitleConsistencyCheck.ruleName = 'titleConsistencyCheck';
+
 const RULES = [
   ruleFirstTagMarginTop,
   ruleFmtitleMargins,
@@ -2221,7 +2264,9 @@ const RULES = [
   ruleFigureImage,
   ruleCrossRefLink,
   ruleUnwantedTag,
-  ruleImageNameCheck
+  ruleImageNameCheck,
+  ruleAnchorTextDisplay,
+  ruleTitleConsistencyCheck
 ];
-RULES.push(ruleAnchorTextDisplay);
+
 RULES.unshift(ruleStylesheetLinkCheck);

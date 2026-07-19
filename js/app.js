@@ -5,6 +5,86 @@
    validator, and reporter modules.
    ============================================================ */
 
+// ── Mark as Fixed ──────────────────────────────
+function getFixedKey(fileName, ruleName) {
+  return `fixed_${fileName}_${ruleName}`;
+}
+
+function handleFixedChange(checkbox) {
+  const fileName = checkbox.dataset.file;
+  const ruleName = checkbox.dataset.rule;
+  const key = getFixedKey(fileName, ruleName);
+
+  const ruleBlock = checkbox.closest('.rule-group, .rule-block, .rule-row, .rule-card');
+  if (!ruleBlock) return;
+
+  if (checkbox.checked) {
+    localStorage.setItem(key, '1');
+    ruleBlock.classList.add('rule-fixed');
+    checkbox.nextElementSibling.textContent = '✓ Fixed';
+  } else {
+    localStorage.removeItem(key);
+    ruleBlock.classList.remove('rule-fixed');
+    checkbox.nextElementSibling.textContent = 'Mark as Fixed';
+  }
+
+  updateClearAllButton();
+}
+
+function restoreFixedStates() {
+  document.querySelectorAll('.fixed-checkbox').forEach(cb => {
+    const key = getFixedKey(cb.dataset.file, cb.dataset.rule);
+    if (localStorage.getItem(key) === '1') {
+      cb.checked = true;
+      cb.nextElementSibling.textContent = '✓ Fixed';
+      const ruleBlock = cb.closest('.rule-group, .rule-block, .rule-row, .rule-card');
+      if (ruleBlock) ruleBlock.classList.add('rule-fixed');
+    }
+  });
+  updateClearAllButton();
+}
+
+function updateClearAllButton() {
+  const anyChecked = document.querySelectorAll('.fixed-checkbox:checked').length > 0;
+  let btn = document.getElementById('clearAllFixedBtn');
+  if (anyChecked && !btn) {
+    // Place button top-right of results — not full width prepend
+    const resultsContainer = document.getElementById('cardList') ||
+                             document.getElementById('results') ||
+                             document.querySelector('.results-container');
+    if (resultsContainer && !document.getElementById('clearAllFixedBtn')) {
+      // Create a wrapper aligned to the right
+      const wrapper = document.createElement('div');
+      wrapper.id = 'clearAllFixedWrapper';
+      wrapper.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:0.75rem;';
+      btn = document.createElement('button');
+      btn.id = 'clearAllFixedBtn';
+      btn.textContent = '✕ Clear All Fixed';
+      btn.className = 'clear-fixed-btn';
+      btn.onclick = clearAllFixed;
+      wrapper.appendChild(btn);
+      resultsContainer.prepend(wrapper);
+    }
+  } else if (!anyChecked && btn) {
+    const wrapper = document.getElementById('clearAllFixedWrapper');
+    if (wrapper) wrapper.remove();
+  }
+}
+
+function clearAllFixed() {
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('fixed_'))
+    .forEach(k => localStorage.removeItem(k));
+  document.querySelectorAll('.fixed-checkbox').forEach(cb => {
+    cb.checked = false;
+    cb.nextElementSibling.textContent = 'Mark as Fixed';
+  });
+  document.querySelectorAll('.rule-fixed').forEach(el => {
+    el.classList.remove('rule-fixed');
+  });
+  updateClearAllButton();
+}
+
 // ── State ──────────────────────────────────────
 let selectedFileList = null;
 let groupingSkipped = false;
@@ -255,6 +335,15 @@ skipGroupingBtn.addEventListener('click', async () => {
 async function executeValidation() {
   if (!selectedFileList) return;
 
+  // Clear all fixed states from previous run
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('fixed_'))
+    .forEach(k => localStorage.removeItem(k));
+
+  // Also remove the Clear All Fixed button if visible
+  const oldWrapper = document.getElementById('clearAllFixedWrapper');
+  if (oldWrapper) oldWrapper.remove();
+
   await configReadyPromise;
 
   runValidationBtn.disabled = true;
@@ -446,6 +535,22 @@ async function runValidation(fileList) {
       mode: f.pagebreakMode || 'numeric'
     };
   }
+
+  // ── Title Consistency: calculate expected title ──────────────
+  const allFileData = activeFiles;
+  const allTitles = allFileData.map(f => f.title || '').filter(Boolean);
+  const titleFreq = {};
+  for (const t of allTitles) {
+    titleFreq[t] = (titleFreq[t] || 0) + 1;
+  }
+  const expectedTitle = Object.keys(titleFreq).sort(
+    (a, b) => titleFreq[b] - titleFreq[a]
+  )[0] || '';
+
+  for (const f of allFileData) {
+    f.expectedTitle = expectedTitle;
+  }
+  // ─────────────────────────────────────────────────────────────
 
   const results = validateAll(activeFiles);
 

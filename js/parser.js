@@ -58,34 +58,34 @@ function readFileAsText(file) {
  *   { firstTag: "", firstTagClass: "" } if nothing found.
  */
 function parseXhtmlFirstTag(xhtmlText) {
-  // Find the opening <body ...> tag (may have attributes).
   const bodyMatch = xhtmlText.match(/<body[^>]*>/i);
-  if (!bodyMatch) {
-    return { firstTag: "", firstTagClass: "" };
-  }
+  if (!bodyMatch) return { firstTag: "", firstTagClass: "" };
 
-  const afterBody = xhtmlText.slice(bodyMatch.index + bodyMatch[0].length);
+  // Remove all self-closing pagebreak anchors before parsing
+  // e.g. <a id="pagebreak_52"/> so they don't get picked as first tag
+  const afterBody = xhtmlText
+    .slice(bodyMatch.index + bodyMatch[0].length)
+    .replace(/<a\s[^>]*id\s*=\s*["']pagebreak_[^"']*["'][^>]*\/>/gi, '');
 
-  // Find the first element tag (skips whitespace, comments, text nodes).
-  // This regex looks for the first "<tagname ...>" that is not a comment/doctype.
-  const tagMatch = afterBody.match(/<!--[\s\S]*?-->|<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^<>]*)?)>/);
+  const tagMatch = afterBody.match(
+    /<!--[\s\S]*?-->|<([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^<>]*)?)>/
+  );
 
-  if (!tagMatch) {
-    return { firstTag: "", firstTagClass: "" };
-  }
+  if (!tagMatch) return { firstTag: "", firstTagClass: "" };
 
-  // If the first match found is a comment (group 1 undefined), skip past it
-  // and search again in the remaining text.
   if (!tagMatch[1]) {
     const remaining = afterBody.slice(tagMatch.index + tagMatch[0].length);
     return parseXhtmlFirstTag("<body>" + remaining);
   }
 
-  const tagName = tagMatch[1];
+  const tagName   = tagMatch[1];
   const attributes = tagMatch[2] || "";
-
-  const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
-  const className = classMatch ? (classMatch[1] || classMatch[2] || "") : "";
+  const classMatch = attributes.match(
+    /class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i
+  );
+  const className = classMatch
+    ? (classMatch[1] || classMatch[2] || "")
+    : "";
 
   return { firstTag: tagName, firstTagClass: className.trim() };
 }

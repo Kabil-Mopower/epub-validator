@@ -85,11 +85,16 @@ function validateFile(fileData) {
     });
   }
 
+  const titleMismatch = fileData.title &&
+                        fileData.expectedTitle &&
+                        fileData.title !== fileData.expectedTitle;
+
   return {
     fileName: fileData.fileName,
     matterType: fileData.matterType || "unassigned",
     title: fileData.title || "",
-    status: !overallPass ? "FAIL" : (hasWarning ? "WARNING" : "PASS"),
+    expectedTitle: fileData.expectedTitle || "",
+    status: !overallPass ? "FAIL" : (hasWarning || titleMismatch ? "WARNING" : "PASS"),
     reason: reasons.join(" "),
     ruleResults: ruleResults
   };

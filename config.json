@@ -30,6 +30,7 @@
     "crossRefLink": true,
     "unwantedTag": true,
     "imageNameCheck": true,
-    "anchorTextDisplay": true
+    "anchorTextDisplay": true,
+    "titleConsistencyCheck": false
   }
 }
