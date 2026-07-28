@@ -826,3 +826,24 @@ function parseAnchorTexts(xhtmlText) {
   }
   return hits;
 }
+
+function parseFigureAnchors(xhtmlText) {
+  const ids = [];
+  const hrefs = [];
+
+  const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
+  let m;
+  while ((m = idRegex.exec(xhtmlText)) !== null) {
+    const id = m[1].trim();
+    if (!id.toLowerCase().startsWith('pagebreak')) {
+      ids.push(id);
+    }
+  }
+
+  const hrefRegex = /<a\s[^>]*href\s*=\s*["']#([^"']+)["'][^>]*>/gi;
+  while ((m = hrefRegex.exec(xhtmlText)) !== null) {
+    hrefs.push(m[1].trim());
+  }
+
+  return { ids, hrefs };
+}

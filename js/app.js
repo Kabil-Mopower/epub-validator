@@ -465,6 +465,7 @@ async function runValidation(fileList) {
     const crossRefHits = parseCrossRefs(xhtmlText);
     const imageSrcs = parseImageSrcs(xhtmlText);
     const anchorTexts = parseAnchorTexts(xhtmlText);
+    const figureAnchors = parseFigureAnchors(xhtmlText);
     const stylesheetLink = parseStylesheetLink(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
     const hasTrailingSpace = parseTrailingSpace(xhtmlText);
@@ -504,6 +505,7 @@ async function runValidation(fileList) {
       crossRefHits,
       imageSrcs,
       anchorTexts,
+      figureAnchors,
       stylesheetLink,
       emptyTags,
       orphanClose,

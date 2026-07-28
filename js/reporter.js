@@ -849,6 +849,31 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'figureAnchorCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">All IDs and href links are matched correctly</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.figureAnchorRows.length} anchor issue(s) found</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>ID / href</th>
+                <th>Issue</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.figureAnchorRows.map(row => `
+                <tr>
+                  <td class="rule-fail-text">${escapeHtml(row.type)}</td>
+                  <td><code>${escapeHtml(row.id)}</code></td>
+                  <td>${escapeHtml(row.issue)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'imageNameCheck') {
       if (r.pass) {
         tableBody = `<p class="val-pass">All image filenames match expected pattern and sequence</p>`;
@@ -1228,6 +1253,7 @@ const QC_RULES = [
   { name: 'unwantedTag',       label: 'Unwanted Tag Check',                   applies: 'All matter types',           checks: 'No empty tags, orphan closing tags, or unclosed tags' },
   { name: 'imageNameCheck',    label: 'Image Name Check',                     applies: 'Body Matter only',           checks: 'Image filenames must match {chapter}-###.png and be sequential from 001' },
   { name: 'anchorTextDisplay', label: 'Anchor Text Display',                  applies: 'All matter types',           checks: 'Displays the inner text of every <a> tag as a numbered list. Pagebreak markers are ignored. Informational only — always PASS.' },
+  { name: 'figureAnchorCheck', label: 'Figure Anchor Check',                  applies: 'All matter types',           checks: 'Bidirectional integrity: every id must be linked by an <a href="#id"> in the same file, and every <a href="#id"> must point to an existing id. Pagebreak ids are skipped.' },
   { name: 'titleConsistencyCheck', label: 'Title Consistency Check',          applies: 'All files',                  checks: 'Checks that every XHTML file has a <title> tag matching the most common title across all files. FAIL if missing, WARNING if different.' },
 ];
 
@@ -1890,6 +1916,12 @@ function showRuleDetail(el) {
     content += buildSimpleTable(
       ['Matched Text', 'Issue'],
       rule.crossRefRows.map(r => [r.matchedText, r.issue])
+    );
+  }
+  if (rule.figureAnchorRows?.length) {
+    content += buildSimpleTable(
+      ['Type', 'ID / href', 'Issue'],
+      rule.figureAnchorRows.map(r => [r.type, r.id, r.issue])
     );
   }
   if (rule.unwantedTagRows?.length) {

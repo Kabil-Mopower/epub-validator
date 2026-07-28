@@ -31,6 +31,7 @@
     "unwantedTag": true,
     "imageNameCheck": true,
     "anchorTextDisplay": true,
+    "figureAnchorCheck": true,
     "titleConsistencyCheck": false
   }
 }

@@ -2,7 +2,7 @@
 
 ## 1. Project Overview & Purpose
 
-A **browser-only, client-side QC tool** for publishers/EPUB production teams. It validates the unpacked XHTML files of an EPUB against ~29 typographic/structural/content rules (margins, heading styles, spacing, punctuation, pagebreak sequencing, broken cross-references, footnote/table/figure conventions, image naming, etc.), lets the user group chapters into Front/Body/End Matter, run validation, browse a per-file report, view an aggregated rule-centric "Output" panel, inspect a Tag→Class usage index, and optionally check pagebreak continuity across an entire EPUB.
+A **browser-only, client-side QC tool** for publishers/EPUB production teams. It validates the unpacked XHTML files of an EPUB against 32 typographic/structural/content rules (margins, heading styles, spacing, punctuation, pagebreak sequencing, broken cross-references, footnote/table/figure conventions, image naming, stylesheet link presence, anchor text display, title consistency, etc.), lets the user group chapters into Front/Body/End Matter, run validation, browse a per-file report, view an aggregated rule-centric "Output" panel, inspect a Tag→Class usage index, and optionally check pagebreak continuity across an entire EPUB.
 
 No files ever leave the browser — everything is read via the File/FileReader API from a locally selected folder. There is no backend, no build step, and no package manager.
 
@@ -14,14 +14,14 @@ validator/
 ├── config.json                   # Developer-level rule on/off switches (wins over localStorage)
 ├── project-summary.md            # Pre-existing internal architecture summary
 ├── css/
-│   └── style.css                 # ~2330 lines — CSS-variable light/dark theme, full component styling
+│   └── style.css                 # ~2441 lines — CSS-variable light/dark theme, full component styling
 ├── js/
-│   ├── rules.js                  # ~2195 lines — 29 rule functions + RULES[] registry
-│   ├── parser.js                 # ~777 lines — regex-based XHTML/CSS text extraction
-│   ├── validator.js              # ~105 lines — runs active rules over parsed files
-│   ├── reporter.js                # ~2096 lines — all DOM rendering (cards, tables, panels, modals)
-│   ├── bucketing.js              # ~293 lines — drag/drop Front/Body/End Matter grouping UI
-│   └── app.js                    # ~643 lines — entry point, event wiring, orchestration, cursor FX
+│   ├── rules.js                  # ~2272 lines — 32 rule functions + RULES[] registry
+│   ├── parser.js                 # ~828 lines — regex-based XHTML/CSS text extraction
+│   ├── validator.js              # ~110 lines — runs active rules over parsed files
+│   ├── reporter.js                # ~2206 lines — all DOM rendering (cards, tables, panels, modals)
+│   ├── bucketing.js              # ~292 lines — drag/drop Front/Body/End Matter grouping UI
+│   └── app.js                    # ~751 lines — entry point, event wiring, orchestration, cursor FX
 └── Entity Excel/
     └── Entities List.xlsx        # Reference spreadsheet, not loaded by the app
 ```
@@ -33,7 +33,7 @@ Script load order in `index.html` is load-bearing (no ES modules): `rules.js →
 The UI is a 6-step wizard, gated by sidebar locks that unlock progressively:
 
 1. **Epub Select (01)** — folder picker (`<input webkitdirectory>`) or drag-drop fallback; expects `OPS/xhtml/` and `OPS/styles/` subfolders.
-2. **Rules (02)** — enable/disable each of the 29 rules individually (persisted in `localStorage`); developer `config.json` can permanently strip rules from the UI entirely.
+2. **Rules (02)** — enable/disable each of the 32 rules individually (persisted in `localStorage`); developer `config.json` can permanently strip rules from the UI entirely.
 3. **Validation Report (03)** — drag-and-drop bucketing of files into Front/Body/End/Isolate/Unassigned zones (auto-detects body matter via `_NNNN.xhtml` filename suffix), then "Run Validation" or "Skip grouping". Shows a summary card (total/pass/fail/warning + per-matter breakdown) and a collapsible, filterable/searchable card list per file.
 4. **Output (04)** — same results reorganized rule-centric (file → list of rule outcomes), with All/Fail/Warning filters and click-to-expand detail modal.
 5. **Tag Index (05)** — aggregated tag→class usage index across all validated files, click a class name to view its raw CSS block.
@@ -63,12 +63,13 @@ Supporting features:
 - `parseCrossRefs`, `parseReferences`, `parseSuperscripts`, `parseFigureBlocks`, `parseTableImages`, `parsePagebreaks`, `parseCssClassUsage`, `parseImageSrcs`, `parseDotAfterClose`, `parseTrailingSpace`, `parseXhtmlTitle` — each backs one specific rule.
 - `romanToInt` / pagebreak mode detection (`numeric`/`roman`/`mixed`) support both numbering schemes.
 
-### `rules.js` — 29 rule functions, registered in the `RULES` array
+### `rules.js` — 32 rule functions, registered in the `RULES` array
 Each rule takes `(fileData, cssRules)` and returns `{ name, label, pass, notApplicable?, warning?, ...rows, reason }`. Categories:
 - **Margin/typography rules**: `firstTagMarginTop`, `fmtitleMargins`, `headingStyles` (h2–h5), `footnoteClasses`, `copyrightFontSize`, and 4 heading-sequence rules (`h1AuthorH2`, `h1AuthorP`, `h1H2`, `h1P`) that pattern-match consecutive tag sequences and check margin combinations.
-- **Text-content rules**: `doubleSpace`, `tabSpace`, `capitalAfterP`, `endPunctuation`, `ampersand`, `hyphenSpace`, `numberHyphen` (warning-only), `trailingSpace`, `spaceAfterOpen`, `spaceBeforeClose`, `dotAfterClose`.
-- **Link/reference rules**: `superscriptLink`, `referenceCheck` (ref id/href round-trip), `crossRefLink` (figure/table/chapter mentions must be `<a href>`-wrapped).
+- **Text-content rules**: `doubleSpace`, `tabSpace`, `capitalAfterP`, `endPunctuation`, `ampersand`, `hyphenSpace` (off by default), `numberHyphen` (warning-only, off by default), `trailingSpace`, `spaceAfterOpen`, `spaceBeforeClose`, `dotAfterClose`.
+- **Link/reference rules**: `superscriptLink`, `referenceCheck` (ref id/href round-trip), `crossRefLink` (figure/table/chapter mentions must be `<a href>`-wrapped), `anchorTextDisplay` (informational — lists anchor tags found, always passes, `notApplicable` if none).
 - **Structural rules**: `pagebreakCheck` (+ `rulePagebreakCheckFullEpub` variant for cross-file stitched validation), `tableImage`, `figureImage`, `cssClassCheck`, `unwantedTag`, `imageNameCheck` (filename pattern + sequential numbering).
+- **Head/metadata rules**: `stylesheetLinkCheck` (fails if `<link>` to stylesheet missing/wrong from `<head>`), `titleConsistencyCheck` (fails if `<title>` empty/missing, warns if it differs from the expected filename-derived title, off by default in `config.json`).
 
 Extensibility is explicit: adding a rule = write a function of this shape + push it into `RULES`; `validator.js`/`reporter.js` auto-adapt without further changes.
 
@@ -134,7 +135,7 @@ Pagebreak validation is the most complex path: it supports numeric or Roman-nume
 - **Global mutable state** (`bucketAssignments`, `currentResults`, `window.expectedPageCount`, `window.fullEpubPagebreak`, etc.) spread across files with implicit script-load-order coupling — normal for a no-build vanilla project, but any future refactor toward modules would need to make these dependencies explicit.
 - **`Entity Excel/Entities List.xlsx`** is unreferenced by any code — confirm with the project owner whether it's still needed or can be removed/documented as a manual reference.
 - **`parseTrailingSpace`** function body has a redundant/confusing double-ternary (`afterHtml.length > 0 && /\S/.test(afterHtml) === false ? afterHtml.length > 0 : /[\s\S]/.test(afterHtml)`) that always simplifies to `afterHtml.length > 0` — dead complexity worth cleaning up.
-- **No automated tests** — all 29 rules and the parsing layer are validated manually; given the regex-heavy parsing, unit tests around `parser.js` edge cases (self-closing tags, nested classes, comment handling) would catch regressions cheaply.
+- **No automated tests** — all 32 rules and the parsing layer are validated manually; given the regex-heavy parsing, unit tests around `parser.js` edge cases (self-closing tags, nested classes, comment handling) would catch regressions cheaply.
 
 ## 10. Code Quality Observations
 
@@ -144,4 +145,79 @@ Pagebreak validation is the most complex path: it supports numeric or Roman-nume
 - **CSS uses design tokens throughout** (`--bg-surface`, `--accent`, `--fail`, etc.) with a clean dark-mode override block — theming is centralized and consistent.
 - **Comments are used purposefully** — explaining *why* (e.g. the tag-qualified CSS key rationale in `parseStylesheet`, the roman/numeric independence in pagebreak validation) rather than restating code.
 - **Some duplication** in the four `h1*` sequence rules (`ruleH1AuthorH2`, `ruleH1AuthorP`, `ruleH1H2`, `ruleH1P`) — near-identical scenario-scanning and margin-pass logic repeated four times with minor variations; a shared helper parameterized by expected margins/tag sequence would cut ~150 lines.
-- **Long files** (`rules.js` ~2195 lines, `reporter.js` ~2096 lines) are large for a single file but remain navigable due to consistent per-rule/per-section structuring and clear comment banners.
+- **Long files** (`rules.js` ~2272 lines, `reporter.js` ~2206 lines) are large for a single file but remain navigable due to consistent per-rule/per-section structuring and clear comment banners.
+
+## 11. Rules Registry (all 32)
+
+| Rule (`name`) | Checks | Fail condition |
+|---|---|---|
+| `firstTagMarginTop` | First body tag's top margin | Margin doesn't match expected CSS value for that tag/class |
+| `fmtitleMargins` | `.fmtitle` class margins (Front Matter only) | Margin-top/bottom mismatch vs. CSS; `notApplicable` outside Front Matter |
+| `headingStyles` | h2–h5 styling consistency | Heading class/margin doesn't match its CSS rule |
+| `footnoteClasses` | Footnote paragraph classes | Class missing/incorrect on footnote-marked paragraphs |
+| `h1AuthorH2` / `h1AuthorP` / `h1H2` / `h1P` | Consecutive tag-sequence + margin combos after `<h1>` | Sequence present but margins don't match expected pattern |
+| `copyrightFontSize` | Font size on `Copyright.xhtml` (End/Front Matter only) | Font-size doesn't match required value; `notApplicable` elsewhere |
+| `doubleSpace` | Two-or-more consecutive spaces in text | Any hit found |
+| `tabSpace` | Literal tab characters in text | Any hit found |
+| `capitalAfterP` | First letter after `<p>` is capitalized | Lowercase first letter found |
+| `endPunctuation` | Paragraphs end with terminal punctuation (Body Matter) | Missing terminal punctuation; `notApplicable` outside Body |
+| `ampersand` | Literal `&&` in text | Any hit found |
+| `hyphenSpace` (off by default) | Hyphen surrounded by spaces | Any hit found |
+| `numberHyphen` (warning-only, off by default) | `number-hyphen-number` patterns | Warns, never fails |
+| `trailingSpace` | Trailing whitespace before closing tags | Any hit found |
+| `spaceAfterOpen` / `spaceBeforeClose` | Space immediately after `<tag>` / before `</tag>` | Any hit found |
+| `dotAfterClose` | Stray `.` immediately after a closing tag | Any hit found |
+| `superscriptLink` | Superscript footnote markers wrapped in `<a>` (Body Matter) | Superscript without link; `notApplicable` outside Body |
+| `referenceCheck` | Footnote/reference id ↔ href round-trip | Orphan id or href with no matching target |
+| `crossRefLink` | Figure/table/chapter mentions in text are `<a href>`-wrapped | Plain-text mention without a link |
+| `pagebreakCheck` / `rulePagebreakCheckFullEpub` | Pagebreak id sequencing (single file / stitched across bucket order) | Gap, duplicate, or out-of-order id in numeric or Roman series |
+| `tableImage` | Table images have required wrapper/class (Body Matter) | Missing wrapper/class; `notApplicable` outside Body |
+| `cssClassCheck` | Every class used in markup exists in the stylesheet | Class used in XHTML but not defined in CSS |
+| `figureImage` | Figure images have required wrapper/class (Body Matter) | Missing wrapper/class; `notApplicable` outside Body |
+| `unwantedTag` | Orphan closing tags, empty tags, unclosed tags | Any structural mismatch found |
+| `imageNameCheck` | Image filename pattern + sequential numbering (Body Matter) | Filename doesn't match pattern or breaks sequence; `notApplicable` outside Body |
+| `anchorTextDisplay` | Informational — lists all `<a>` anchor texts found | Never fails; `notApplicable` if no anchors in file |
+| `stylesheetLinkCheck` | `<link>` to stylesheet present in `<head>` | Missing, or points to wrong file |
+| `titleConsistencyCheck` (off by default) | `<title>` present and matches expected value | Empty/missing `<title>` = FAIL; mismatched title = WARNING |
+
+## 12. Config System
+
+`config.json` (`{ "rules": { "<ruleName>": true/false } }`) is fetched once at startup by `loadRuleConfig()` in `app.js`. Any rule explicitly set to `false` is **spliced out of the `RULES` array entirely** — it never appears in the Rules (02) tab and can't be re-enabled by the user, even via localStorage. This is a developer/deployment-level override, one level above the per-user toggle.
+
+Currently disabled by default in `config.json`: `hyphenSpace`, `numberHyphen`, `titleConsistencyCheck`.
+
+The Rules (02) tab then lets the user toggle any *remaining* (config-enabled) rule on/off, persisted to `localStorage['epubValidator.rulesEnabled']`. `getActiveRuleNames()` (used by `validator.js`) is effectively the intersection of `config.json`-enabled ∩ user-enabled rules.
+
+## 13. localStorage Usage
+
+| Key | Purpose |
+|---|---|
+| `theme` | Light/dark theme preference |
+| `epubValidator.rulesEnabled` | Per-user rule on/off state (JSON map), scoped by config.json's allowed rule set |
+| `epubValidator.bucketing.<folder>` | Front/Body/End/Isolate bucket assignment per selected folder name |
+| `epubValidator.bucketOrder.<folder>` | Explicit ordering within each bucket, per folder |
+| `epubValidator.pagebreakCount` | Last-entered expected pagebreak count (prompt convenience) |
+
+Folder-scoped keys use the selected directory name as part of the key, so switching folders doesn't clobber another project's bucket layout.
+
+## 14. Known Quirks / Gotchas
+
+- Rule count has grown from 29 → 32 across recent commits (`stylesheetLinkCheck`, `anchorTextDisplay`, `titleConsistencyCheck` added; `numberHyphen` turned off by default per commit `dbd4804`).
+- `titleConsistencyCheck` ships **off** in `config.json` — don't assume it runs by default when debugging title-related reports.
+- `anchorTextDisplay` always `pass: true` — it's a display/inventory rule, not a real QC gate; don't expect it to ever fail a file.
+- Matter-scoped rules self-report `notApplicable` rather than being filtered out — a rule showing up as "N/A" in a report is expected behavior for the wrong bucket type, not a bug.
+- `config.json`-disabled rules are invisible in the UI entirely (not just unchecked) — if a rule seems to be "missing" from the Rules tab, check `config.json` before assuming a code bug.
+- Script load order in `index.html` is load-bearing — no ES modules, no bundler, so `rules.js` must load before `parser.js`/`validator.js`/`reporter.js`, which must load before `app.js`.
+- `webkitdirectory` is Chromium-only; Firefox/Safari users get degraded/no folder-picker support.
+
+## 15. How to Run
+
+**Do not open `index.html` via `file://`** — `fetch('config.json')` and some File/FileReader flows are blocked or unreliable under the `file://` origin in most browsers.
+
+Serve the folder over HTTP instead:
+
+```
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000/` in a Chromium-based browser (Chrome/Edge) for full `webkitdirectory` folder-picker support.

@@ -2192,6 +2192,42 @@ ruleHeadingStyles.ruleName     = 'headingStyles';
 ruleFootnoteClasses.ruleName   = 'footnoteClasses';
 ruleCopyrightFontSize.ruleName = 'copyrightFontSize';
 
+function ruleFigureAnchorCheck(fileData) {
+  const { ids, hrefs } = fileData.figureAnchors || { ids: [], hrefs: [] };
+  const figureAnchorRows = [];
+
+  for (const id of ids) {
+    if (!hrefs.includes(id)) {
+      figureAnchorRows.push({
+        type: 'Orphan ID',
+        id,
+        issue: `id="${id}" is never linked by any <a href="#${id}">`
+      });
+    }
+  }
+
+  for (const href of hrefs) {
+    if (!ids.includes(href)) {
+      figureAnchorRows.push({
+        type: 'Broken href',
+        id: href,
+        issue: `<a href="#${href}"> has no matching id="${href}" in this file`
+      });
+    }
+  }
+
+  const pass = figureAnchorRows.length === 0;
+
+  return {
+    name: 'figureAnchorCheck',
+    label: 'Figure Anchor Check',
+    pass,
+    reason: pass ? '' : `${figureAnchorRows.length} anchor issue(s) found`,
+    figureAnchorRows
+  };
+}
+ruleFigureAnchorCheck.ruleName = 'figureAnchorCheck';
+
 function ruleTitleConsistencyCheck(fileData) {
   const title         = (fileData.title || '').trim();
   const expectedTitle = (fileData.expectedTitle || '').trim();
@@ -2266,6 +2302,7 @@ const RULES = [
   ruleUnwantedTag,
   ruleImageNameCheck,
   ruleAnchorTextDisplay,
+  ruleFigureAnchorCheck,
   ruleTitleConsistencyCheck
 ];
 
