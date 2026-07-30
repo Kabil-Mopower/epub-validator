@@ -82,6 +82,8 @@ function validateFile(fileData) {
       imageNameRows: result.imageNameRows || [],
       anchorTexts: result.anchorTexts || [],
       figureAnchorRows: result.figureAnchorRows || [],
+      crossFileHrefRows: result.crossFileHrefRows || [],
+      crossFileAnchors: result.crossFileAnchors || [],
       reason: result.reason || ""
     });
   }

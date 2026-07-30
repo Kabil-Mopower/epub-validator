@@ -2170,6 +2170,59 @@ function ruleAnchorTextDisplay(fileData) {
 }
 ruleAnchorTextDisplay.ruleName = 'anchorTextDisplay';
 
+function ruleCrossFileHrefCheck(fileData) {
+  const anchors = fileData.crossFileAnchors || [];
+
+  if (anchors.length === 0) {
+    return {
+      name: 'crossFileHrefCheck',
+      label: 'Cross-File Href Check',
+      pass: true,
+      notApplicable: true,
+      crossFileHrefRows: [],
+      reason: 'No cross-file anchor tags found in this file.'
+    };
+  }
+
+  const rows = anchors.map(a => {
+    const pass = /\.xhtml$/i.test(a.href);
+    return {
+      href: a.href,
+      text: a.text,
+      pass,
+      reason: pass ? '' : `href "${a.href}" does not end with .xhtml`
+    };
+  });
+
+  const overallPass = rows.every(r => r.pass);
+
+  return {
+    name: 'crossFileHrefCheck',
+    label: 'Cross-File Href Check',
+    pass: overallPass,
+    notApplicable: false,
+    crossFileHrefRows: rows,
+    reason: overallPass ? '' : `${rows.filter(r => !r.pass).length} cross-file href(s) do not end with .xhtml`
+  };
+}
+ruleCrossFileHrefCheck.ruleName = 'crossFileHrefCheck';
+
+function ruleCrossFileAnchorDisplay(fileData) {
+  const anchors = (fileData.crossFileAnchors || []).filter(a => /\.xhtml$/i.test(a.href));
+
+  return {
+    name: 'crossFileAnchorDisplay',
+    label: 'Cross-File Anchor Display',
+    pass: true,
+    notApplicable: anchors.length === 0,
+    reason: anchors.length === 0
+      ? 'No cross-file .xhtml anchor tags found in this file.'
+      : `${anchors.length} cross-file anchor(s) found.`,
+    crossFileAnchors: anchors
+  };
+}
+ruleCrossFileAnchorDisplay.ruleName = 'crossFileAnchorDisplay';
+
 function ruleStylesheetLinkCheck(fileData) {
   const result = fileData.stylesheetLink || { found: false, actual: null };
   return {
@@ -2303,7 +2356,9 @@ const RULES = [
   ruleImageNameCheck,
   ruleAnchorTextDisplay,
   ruleFigureAnchorCheck,
-  ruleTitleConsistencyCheck
+  ruleTitleConsistencyCheck,
+  ruleCrossFileHrefCheck,
+  ruleCrossFileAnchorDisplay
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);

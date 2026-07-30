@@ -827,6 +827,29 @@ function parseAnchorTexts(xhtmlText) {
   return hits;
 }
 
+/**
+ * Finds every <a href="..."> whose href does NOT contain "#"
+ * (i.e. not an in-file anchor link) and returns {href, text} pairs.
+ * Pagebreak anchors (self-closing <a id="pagebreak_..."/>) are excluded
+ * since they carry no href/text.
+ */
+function parseCrossFileAnchors(xhtmlText) {
+  const hits = [];
+  const cleaned = xhtmlText.replace(/<a\s[^>]*\/>/gi, '');
+  const re = /<a\s([^>]*)>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    const attrs = m[1];
+    const hrefM = attrs.match(/href\s*=\s*["']([^"']*)["']/i);
+    if (!hrefM) continue;
+    const href = hrefM[1].trim();
+    if (!href || href.includes('#')) continue;
+    const text = m[2].replace(/<[^>]+>/g, '').trim();
+    hits.push({ href, text });
+  }
+  return hits;
+}
+
 function parseFigureAnchors(xhtmlText) {
   const ids = [];
   const hrefs = [];

@@ -32,6 +32,8 @@
     "imageNameCheck": true,
     "anchorTextDisplay": true,
     "figureAnchorCheck": true,
-    "titleConsistencyCheck": false
+    "titleConsistencyCheck": false,
+    "crossFileHrefCheck": true,
+    "crossFileAnchorDisplay": true
   }
 }

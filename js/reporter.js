@@ -171,6 +171,8 @@ function buildRuleTable(result) {
         : r.name === 'figureImage' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No figure blocks found')
         : r.name === 'imageNameCheck' ? (result.matterType !== 'body' ? '&mdash; Body matter only' : '&mdash; No images found')
         : r.name === 'anchorTextDisplay' ? '&mdash; No anchor tags found'
+        : r.name === 'crossFileHrefCheck' ? '&mdash; No cross-file anchor tags found'
+        : r.name === 'crossFileAnchorDisplay' ? '&mdash; No cross-file .xhtml anchors found'
         : 'Not applicable for this matter type';
       return `
         <div class="rule-group" data-rule-status="NA">
@@ -987,6 +989,55 @@ function buildRuleTable(result) {
           </li>`).join('');
         tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
       }
+    } else if (r.name === 'crossFileHrefCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">All cross-file hrefs end with .xhtml</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.crossFileHrefRows.filter(row => !row.pass).length} cross-file href(s) do not end with .xhtml</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>Href</th>
+                <th>Anchor Text</th>
+                <th>Status</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.crossFileHrefRows.map(row => `
+                <tr>
+                  <td><code>${escapeHtml(row.href)}</code></td>
+                  <td>${escapeHtml(row.text)}</td>
+                  <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
+                  <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'crossFileAnchorDisplay') {
+      if (!r.crossFileAnchors || r.crossFileAnchors.length === 0) {
+        tableBody = `<p class="rule-na-text">No cross-file .xhtml anchors found.</p>`;
+      } else {
+        tableBody = `
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th style="padding-left:2rem;">Anchor Text</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.crossFileAnchors.map(a => `
+                <tr>
+                  <td><code>${escapeHtml(a.href)}</code></td>
+                  <td style="padding-left:2rem;">${escapeHtml(a.text)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
         tableBody = `
@@ -1255,6 +1306,8 @@ const QC_RULES = [
   { name: 'anchorTextDisplay', label: 'Anchor Text Display',                  applies: 'All matter types',           checks: 'Displays the inner text of every <a> tag as a numbered list. Pagebreak markers are ignored. Informational only — always PASS.' },
   { name: 'figureAnchorCheck', label: 'Figure Anchor Check',                  applies: 'All matter types',           checks: 'Bidirectional integrity: every id must be linked by an <a href="#id"> in the same file, and every <a href="#id"> must point to an existing id. Pagebreak ids are skipped.' },
   { name: 'titleConsistencyCheck', label: 'Title Consistency Check',          applies: 'All files',                  checks: 'Checks that every XHTML file has a <title> tag matching the most common title across all files. FAIL if missing, WARNING if different.' },
+  { name: 'crossFileHrefCheck', label: 'Cross-File Href Check',              applies: 'All matter types',            checks: 'Every <a href="..."> pointing to another file (no # in href) must end with .xhtml. FAILs otherwise.' },
+  { name: 'crossFileAnchorDisplay', label: 'Cross-File Anchor Display',      applies: 'All matter types',            checks: 'Displays every cross-file .xhtml anchor (href, text) as a list. Informational only — always PASS.' },
 ];
 
 function ensureRulesContinueButton() {
