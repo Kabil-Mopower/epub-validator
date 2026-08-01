@@ -173,6 +173,7 @@ function buildRuleTable(result) {
         : r.name === 'anchorTextDisplay' ? '&mdash; No anchor tags found'
         : r.name === 'crossFileHrefCheck' ? '&mdash; No cross-file anchor tags found'
         : r.name === 'crossFileAnchorDisplay' ? '&mdash; No cross-file .xhtml anchors found'
+        : r.name === 'boldSpaceCheck' ? '&mdash; No <b> tags found in this file'
         : 'Not applicable for this matter type';
       return `
         <div class="rule-group" data-rule-status="NA">
@@ -1038,6 +1039,72 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'tableStructureCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">No table structure issues found</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.tableStructureRows.length} table structure issue(s) found</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>Issue Type</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.tableStructureRows.map(row => `
+                <tr>
+                  <td class="rule-fail-text">${escapeHtml(row.type)}</td>
+                  <td>${escapeHtml(row.detail)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'boldSpaceCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">No <b> tags start with a space</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.boldSpaceRows.length} <b> tag(s) start with a space</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr>
+                <th>Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${r.boldSpaceRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.context)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'listParaCheck') {
+      if (r.notApplicable) {
+        tableBody = `<p class="val-na">— No list tags found in this file</p>`;
+      } else if (r.pass) {
+        tableBody = `<p class="val-pass">No list structure issues found</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.listParaRows.length} list structure issue(s) found</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr><th>Issue</th><th>Context</th></tr>
+            </thead>
+            <tbody>
+              ${r.listParaRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.type)}</td>
+                  <td>${escapeHtml(row.context)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
         tableBody = `
@@ -1308,6 +1375,9 @@ const QC_RULES = [
   { name: 'titleConsistencyCheck', label: 'Title Consistency Check',          applies: 'All files',                  checks: 'Checks that every XHTML file has a <title> tag matching the most common title across all files. FAIL if missing, WARNING if different.' },
   { name: 'crossFileHrefCheck', label: 'Cross-File Href Check',              applies: 'All matter types',            checks: 'Every <a href="..."> pointing to another file (no # in href) must end with .xhtml. FAILs otherwise.' },
   { name: 'crossFileAnchorDisplay', label: 'Cross-File Anchor Display',      applies: 'All matter types',            checks: 'Displays every cross-file .xhtml anchor (href, text) as a list. Informational only — always PASS.' },
+  { name: 'tableStructureCheck', label: 'Table Structure Check', applies: 'All matter types', checks: 'Every <table> must have <thead> and <tbody>. No <td> directly inside <thead>/<tbody> without <tr>. No <th> tags allowed.' },
+  { name: 'boldSpaceCheck', label: 'Bold Space Check', applies: 'All matter types', checks: '<b> tags must not have content starting with a space' },
+  { name: 'listParaCheck', label: 'List Para Check', applies: 'All matter types', checks: 'Checks 6 list structure errors: <p> before <li>, nested list without <li>, orphan <li>, empty <li>, empty <p> in <li>, unclosed <li>' },
 ];
 
 function ensureRulesContinueButton() {

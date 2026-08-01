@@ -469,6 +469,9 @@ async function runValidation(fileList) {
     const crossFileAnchors = parseCrossFileAnchors(xhtmlText);
     const stylesheetLink = parseStylesheetLink(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
+    const tableStructure = parseTableStructure(xhtmlText);
+    const boldSpaceHits = parseBoldSpace(xhtmlText);
+    const listParaHits = parseListParaCheck(xhtmlText);
     const hasTrailingSpace = parseTrailingSpace(xhtmlText);
     const trailingSpaceContent = xhtmlText.slice(
       xhtmlText.search(/<\/html\s*>/i) + '</html>'.length
@@ -512,6 +515,9 @@ async function runValidation(fileList) {
       emptyTags,
       orphanClose,
       unclosedTags,
+      tableStructure,
+      boldSpaceHits,
+      listParaHits,
       hasTrailingSpace,
       trailingSpaceContent,
       title,

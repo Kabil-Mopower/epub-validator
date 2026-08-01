@@ -850,6 +850,288 @@ function parseCrossFileAnchors(xhtmlText) {
   return hits;
 }
 
+/**
+ * Scans raw XHTML text for every <table>...</table> block and runs
+ * structural checks against <thead>, <tbody>, <tr>, and <td> nesting.
+ *
+ * Returns { issues: [{type, detail}] }.
+ */
+function parseTableStructure(text) {
+  const issues = [];
+  const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+  let tableMatch;
+  let tableIndex = 0;
+
+  while ((tableMatch = tableRegex.exec(text)) !== null) {
+    tableIndex++;
+    const tableContent = tableMatch[1];
+    const label = `Table #${tableIndex}`;
+
+    const theadOpenMatch = tableContent.match(/<thead[^>]*>/i);
+    const theadCloseMatch = tableContent.match(/<\/thead>/i);
+    const tbodyOpenMatches = tableContent.match(/<tbody[^>]*>/gi) || [];
+    const tbodyCloseMatch = tableContent.match(/<\/tbody>/i);
+
+    // THEAD CHECKS
+    if (!theadOpenMatch) {
+      issues.push({ type: 'Missing <thead>', detail: `${label}: no <thead> tag found` });
+    } else if (!theadCloseMatch) {
+      issues.push({ type: '<thead> not closed', detail: `${label}: <thead> found but no </thead>` });
+    }
+
+    let theadContent = '';
+    if (theadOpenMatch && theadCloseMatch) {
+      const theadFullMatch = tableContent.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i);
+      theadContent = theadFullMatch ? theadFullMatch[1] : '';
+
+      if (theadContent.trim().length === 0) {
+        issues.push({ type: '<thead> is empty', detail: `${label}: <thead></thead> has nothing inside` });
+      }
+
+      const beforeFirstTr = theadContent.split(/<tr[^>]*>/i)[0];
+      if (/<td[^>]*>/i.test(beforeFirstTr)) {
+        issues.push({ type: '<td> without <tr> in <thead>', detail: `${label}: <td> found directly inside <thead> without a <tr>` });
+      }
+    }
+
+    // <tr> before <thead>
+    if (theadOpenMatch) {
+      const beforeThead = tableContent.slice(0, theadOpenMatch.index);
+      if (/<tr[^>]*>/i.test(beforeThead)) {
+        issues.push({ type: '<tr> before <thead>', detail: `${label}: a <tr> appears before <thead> opens` });
+      }
+    }
+
+    // <thead> after <tbody>
+    if (theadOpenMatch && tbodyOpenMatches.length > 0) {
+      const firstTbodyIndex = tableContent.search(/<tbody[^>]*>/i);
+      if (firstTbodyIndex !== -1 && theadOpenMatch.index > firstTbodyIndex) {
+        issues.push({ type: '<thead> after <tbody>', detail: `${label}: <thead> appears after <tbody> in the table` });
+      }
+    }
+
+    // <tbody> opened inside <thead> (before </thead> closes)
+    if (theadOpenMatch && tbodyOpenMatches.length > 0) {
+      const firstTbodyIndex = tableContent.search(/<tbody[^>]*>/i);
+      const theadCloseIndex = theadCloseMatch ? tableContent.search(/<\/thead>/i) : -1;
+      if (firstTbodyIndex !== -1 && firstTbodyIndex > theadOpenMatch.index &&
+          (theadCloseIndex === -1 || firstTbodyIndex < theadCloseIndex)) {
+        issues.push({ type: '<tbody> opened inside <thead>', detail: `${label}: <tbody> tag appears before </thead> closes` });
+      }
+    }
+
+    // </thead> after <tbody> started
+    if (theadCloseMatch && tbodyOpenMatches.length > 0) {
+      const theadCloseIndex = tableContent.search(/<\/thead>/i);
+      const firstTbodyIndex = tableContent.search(/<tbody[^>]*>/i);
+      if (firstTbodyIndex !== -1 && firstTbodyIndex < theadCloseIndex) {
+        issues.push({ type: '</thead> after <tbody> started', detail: `${label}: closing </thead> comes after <tbody> already opened, tags are mixed up` });
+      }
+    }
+
+    // TBODY CHECKS
+    if (tbodyOpenMatches.length === 0) {
+      issues.push({ type: 'Missing <tbody>', detail: `${label}: no <tbody> tag found` });
+    } else {
+      if (!tbodyCloseMatch) {
+        issues.push({ type: '<tbody> not closed', detail: `${label}: <tbody> found but no </tbody>` });
+      }
+      if (tbodyOpenMatches.length > 1) {
+        issues.push({ type: 'Multiple <tbody>', detail: `${label}: more than one <tbody> tag found in the same table` });
+      }
+    }
+
+    if (tbodyOpenMatches.length > 0 && tbodyCloseMatch) {
+      const tbodyFullMatch = tableContent.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
+      const tbodyContent = tbodyFullMatch ? tbodyFullMatch[1] : '';
+
+      if (tbodyContent.trim().length === 0) {
+        issues.push({ type: '<tbody> is empty', detail: `${label}: <tbody></tbody> has nothing inside` });
+      }
+
+      const beforeFirstTr = tbodyContent.split(/<tr[^>]*>/i)[0];
+      if (/<td[^>]*>/i.test(beforeFirstTr)) {
+        issues.push({ type: '<td> without <tr> in <tbody>', detail: `${label}: <td> found directly inside <tbody> without a <tr>` });
+      }
+    }
+
+    // TR / TD CHECKS — walk tag-by-tag tracking whether we're inside thead/tbody/tr
+    const tagWalkRegex = /<(\/?)(\s*)(table|thead|tbody|tr|td)([^>]*)>/gi;
+    let walkMatch;
+    let inThead = false;
+    let inTbody = false;
+    let inTr = false;
+    let trHasTd = false;
+    let trOpenTag = null;
+    let tdOpen = false;
+
+    while ((walkMatch = tagWalkRegex.exec(tableContent)) !== null) {
+      const isClose = !!walkMatch[1];
+      const tag = walkMatch[3].toLowerCase();
+
+      // Mismatched closing tag: a <td> was opened and never closed with
+      // </td> before some other closing tag (</tr>, </thead>, </tbody>, </table>) shows up.
+      if (isClose && tag !== 'td' && tdOpen) {
+        issues.push({ type: 'Mismatched closing tag', detail: `${label}: <td> opened but closed with wrong tag </${tag}> instead of </td>` });
+        tdOpen = false;
+      }
+
+      if (tag === 'thead') {
+        inThead = !isClose;
+      } else if (tag === 'tbody') {
+        inTbody = !isClose;
+      } else if (tag === 'tr') {
+        if (!isClose) {
+          inTr = true;
+          trHasTd = false;
+          trOpenTag = walkMatch[0];
+
+          // <tr> directly inside <table>
+          if (!inThead && !inTbody) {
+            issues.push({ type: '<tr> directly inside <table>', detail: `${label}: <tr> found directly in <table>, not wrapped in <thead> or <tbody>` });
+          }
+        } else {
+          if (inTr && !trHasTd) {
+            issues.push({ type: 'Empty <tr>', detail: `${label}: <tr></tr> has no <td> inside` });
+          }
+          inTr = false;
+        }
+      } else if (tag === 'td') {
+        if (!isClose) {
+          tdOpen = true;
+          if (inTr) {
+            trHasTd = true;
+          } else {
+            // <td> directly inside <table> (not wrapped in <tr>, and not inside thead/tbody-without-tr,
+            // already reported separately above)
+            if (!inThead && !inTbody) {
+              issues.push({ type: '<td> directly inside <table>', detail: `${label}: <td> found directly in <table>, skipping both <thead>/<tbody> and <tr>` });
+            }
+          }
+        } else {
+          tdOpen = false;
+        }
+      }
+    }
+
+    // unclosed <tr> check (open tr with no matching close before table ends)
+    if (inTr) {
+      issues.push({ type: '<tr> not closed', detail: `${label}: <tr> found but no </tr>` });
+    }
+  }
+
+  return { issues };
+}
+
+/**
+ * Finds every <b>...</b> tag whose content starts with a space character.
+ * Returns [{ context: 'full <b> tag snippet' }].
+ */
+function parseBoldSpace(text) {
+  const hits = [];
+  const boldRegex = /<b[^>]*>([\s\S]*?)<\/b>/gi;
+  let match;
+
+  while ((match = boldRegex.exec(text)) !== null) {
+    const content = match[1];
+    const trimmedNewlines = content.replace(/^[\r\n]+/, '');
+    if (/^[\u00A0 ]/.test(trimmedNewlines) || trimmedNewlines.startsWith('&nbsp;')) {
+      hits.push({ context: match[0] });
+    }
+  }
+
+  return hits;
+}
+
+function parseListParaCheck(text) {
+  const hits = [];
+
+  // Loop through every <ol> and <ul> block in the file
+  const listRegex = /<(ol|ul)[^>]*>([\s\S]*?)<\/(ol|ul)>/gi;
+  let listMatch;
+  while ((listMatch = listRegex.exec(text)) !== null) {
+    const listContent = listMatch[2];
+    const tag = listMatch[1].toLowerCase();
+
+    // CHECK 1: <p> directly inside <ol>/<ul> without a <li>
+    // Correct:  <ol><li><p>text</p></li></ol>
+    // Wrong:    <ol><p>text</p><li>...</li></ol>
+    const firstP = listContent.search(/<p[\s>]/i);
+    const firstLi = listContent.search(/<li[\s>]/i);
+    if (firstP !== -1 && (firstLi === -1 || firstP < firstLi)) {
+      hits.push({
+        type: '<p> directly inside <' + tag + '> without <li>',
+        context: listMatch[0].slice(0, 120)
+      });
+    }
+
+    // CHECK 2: A nested <ol> or <ul> appears directly inside a list without a <li> wrapper
+    // Correct:  <ol><li><ul><li><p>text</p></li></ul></li></ol>
+    // Wrong:    <ol><ul><li><p>text</p></li></ul></ol>
+    const nestedListPos = listContent.search(/<(ol|ul)[\s>]/i);
+    if (nestedListPos !== -1 && (firstLi === -1 || nestedListPos < firstLi)) {
+      hits.push({
+        type: 'Nested <ol>/<ul> without <li> wrapper',
+        context: listMatch[0].slice(0, 120)
+      });
+    }
+
+    // CHECK 4: <li> tag is completely empty — nothing inside it
+    // Correct:  <li><p>text</p></li>
+    // Wrong:    <li></li>
+    const emptyLiRegex = /<li[^>]*>\s*<\/li>/gi;
+    let emptyLiMatch;
+    while ((emptyLiMatch = emptyLiRegex.exec(listContent)) !== null) {
+      hits.push({
+        type: 'Empty <li>',
+        context: emptyLiMatch[0]
+      });
+    }
+
+    // CHECK 5: <p> inside <li> is empty — the paragraph has no text
+    // Correct:  <li><p>some text</p></li>
+    // Wrong:    <li><p></p></li>
+    const emptyPInLiRegex = /<li[^>]*>[\s\S]*?<p[^>]*>\s*<\/p>[\s\S]*?<\/li>/gi;
+    let emptyPMatch;
+    while ((emptyPMatch = emptyPInLiRegex.exec(listContent)) !== null) {
+      hits.push({
+        type: 'Empty <p> inside <li>',
+        context: emptyPMatch[0].slice(0, 120)
+      });
+    }
+
+    // CHECK 6: <li> is opened but never closed with </li>
+    // Correct:  <li><p>text</p></li>
+    // Wrong:    <li><p>text</p>   (no closing </li>)
+    const liOpenRegex = /<li[^>]*>/gi;
+    let liOpen;
+    while ((liOpen = liOpenRegex.exec(listContent)) !== null) {
+      const afterLi = listContent.slice(liOpen.index + liOpen[0].length);
+      if (!/^[\s\S]*?<\/li>/i.test(afterLi)) {
+        hits.push({
+          type: 'Unclosed <li>',
+          context: liOpen[0]
+        });
+      }
+    }
+  }
+
+  // CHECK 3: <li> tag found outside of any <ol> or <ul> — it is an orphan
+  // Correct:  <ol><li><p>text</p></li></ol>
+  // Wrong:    <p><li><p>text</p></li></p>  — <li> has no parent list
+  const strippedText = text.replace(/<(ol|ul)[^>]*>[\s\S]*?<\/(ol|ul)>/gi, '');
+  const orphanLiRegex = /<li[\s>]/gi;
+  let orphan;
+  while ((orphan = orphanLiRegex.exec(strippedText)) !== null) {
+    hits.push({
+      type: 'Orphan <li> outside any list',
+      context: strippedText.slice(orphan.index, orphan.index + 80)
+    });
+  }
+
+  return hits;
+}
+
 function parseFigureAnchors(xhtmlText) {
   const ids = [];
   const hrefs = [];

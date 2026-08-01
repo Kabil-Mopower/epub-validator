@@ -34,6 +34,9 @@
     "figureAnchorCheck": true,
     "titleConsistencyCheck": false,
     "crossFileHrefCheck": true,
-    "crossFileAnchorDisplay": true
+    "crossFileAnchorDisplay": true,
+    "tableStructureCheck": true,
+    "boldSpaceCheck": true,
+    "listParaCheck": true
   }
 }

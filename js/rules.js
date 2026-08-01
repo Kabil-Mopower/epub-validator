@@ -2324,6 +2324,128 @@ function ruleTitleConsistencyCheck(fileData) {
 }
 ruleTitleConsistencyCheck.ruleName = 'titleConsistencyCheck';
 
+function ruleTableStructureCheck(fileData, cssRules) {
+  const hasTable = !!(fileData.tableStructure);
+  const issues = (fileData.tableStructure && fileData.tableStructure.issues) || [];
+
+  if (!hasTable) {
+    return {
+      name: 'tableStructureCheck',
+      label: 'Table Structure Check',
+      pass: true,
+      notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      tableStructureRows: [],
+      reason: ''
+    };
+  }
+
+  if (issues.length === 0) {
+    return {
+      name: 'tableStructureCheck',
+      label: 'Table Structure Check',
+      pass: true,
+      notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      tableStructureRows: [],
+      reason: ''
+    };
+  }
+
+  return {
+    name: 'tableStructureCheck',
+    label: 'Table Structure Check',
+    pass: false,
+    notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    tableStructureRows: issues.map(i => ({ type: i.type, detail: i.detail })),
+    reason: `${issues.length} table structure issue(s) found`
+  };
+}
+ruleTableStructureCheck.ruleName = 'tableStructureCheck';
+
+function ruleBoldSpaceCheck(fileData, cssRules) {
+  console.log('boldSpaceCheck fileData.boldSpaceHits:', fileData.boldSpaceHits);
+
+  const isUndefined = fileData.boldSpaceHits === undefined;
+  const hits = fileData.boldSpaceHits || [];
+
+  if (isUndefined) {
+    return {
+      name: 'boldSpaceCheck',
+      label: 'Bold Space Check',
+      pass: true,
+      notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      boldSpaceRows: [],
+      reason: ''
+    };
+  }
+
+  if (hits.length === 0) {
+    return {
+      name: 'boldSpaceCheck',
+      label: 'Bold Space Check',
+      pass: true,
+      notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      boldSpaceRows: [],
+      reason: ''
+    };
+  }
+
+  return {
+    name: 'boldSpaceCheck',
+    label: 'Bold Space Check',
+    pass: false,
+    notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    boldSpaceRows: hits.map(h => ({ context: h.context })),
+    reason: `${hits.length} <b> tag(s) start with a space`
+  };
+}
+ruleBoldSpaceCheck.ruleName = 'boldSpaceCheck';
+
+function ruleListParaCheck(fileData) {
+  const hits = fileData.listParaHits;
+
+  if (hits === undefined) {
+    return {
+      name: 'listParaCheck', label: 'List Para Check',
+      pass: true, notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      listParaRows: [], reason: ''
+    };
+  }
+
+  if (hits.length === 0) {
+    return {
+      name: 'listParaCheck', label: 'List Para Check',
+      pass: true, notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      listParaRows: [], reason: ''
+    };
+  }
+
+  return {
+    name: 'listParaCheck', label: 'List Para Check',
+    pass: false, notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    listParaRows: hits.map(h => ({ type: h.type, context: h.context })),
+    reason: `${hits.length} list structure issue(s) found`
+  };
+}
+ruleListParaCheck.ruleName = 'listParaCheck';
+
 const RULES = [
   ruleFirstTagMarginTop,
   ruleFmtitleMargins,
@@ -2358,7 +2480,10 @@ const RULES = [
   ruleFigureAnchorCheck,
   ruleTitleConsistencyCheck,
   ruleCrossFileHrefCheck,
-  ruleCrossFileAnchorDisplay
+  ruleCrossFileAnchorDisplay,
+  ruleTableStructureCheck,
+  ruleBoldSpaceCheck,
+  ruleListParaCheck
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);
