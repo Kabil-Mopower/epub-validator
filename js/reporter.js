@@ -15,14 +15,12 @@ let lastParsedFiles = []; // set by app.js runValidation(); feeds the Tag → Cl
  * Renders the summary card (total / passed / failed counts,
  * plus a per-matter-type breakdown).
  */
-function lineColBox(line, col) {
-  if (!line && !col) return '';
+function lineColBox(line) {
+  if (!line) return '';
   return `
     <span class="line-col-box">
       <span class="lc-header">Line</span>
-      <span class="lc-header">Col</span>
       <span class="lc-value">${line || '—'}</span>
-      <span class="lc-value">${col || '—'}</span>
     </span>`;
 }
 
@@ -204,7 +202,7 @@ function buildRuleTable(result) {
 
     if (r.name === 'stylesheetLinkCheck') {
       if (r.pass) {
-        tableBody = `<div style="display:flex;align-items:center;gap:10px;padding:0.75rem 1.2rem;"><p style="color:var(--pass);font-weight:600;margin:0;">&#10003; Correct stylesheet link found.</p>${lineColBox(r.line, r.col)}</div>`;
+        tableBody = `<div style="display:flex;align-items:center;gap:10px;padding:0.75rem 1.2rem;"><p style="color:var(--pass);font-weight:600;margin:0;">&#10003; Correct stylesheet link found.</p>${lineColBox(r.line)}</div>`;
       } else {
         tableBody = `
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:0.75rem 1.2rem;">
@@ -217,7 +215,7 @@ function buildRuleTable(result) {
                 <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
               </p>` : ''}
             </div>
-            ${lineColBox(r.line, r.col)}
+            ${lineColBox(r.line)}
           </div>`;
       }
     } else if (r.name === 'headingStyles' && r.headingRows && r.headingRows.length > 0) {
@@ -258,7 +256,7 @@ function buildRuleTable(result) {
           </tbody>
         </table>
         <div class="location-sidebar">
-          ${visibleRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          ${visibleRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
         </div>
       </div>`;
       }
@@ -290,7 +288,7 @@ function buildRuleTable(result) {
           </tbody>
         </table>
         <div class="location-sidebar">
-          ${r.footnoteRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          ${r.footnoteRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
         </div>
       </div>`;
     } else if (
@@ -351,7 +349,7 @@ function buildRuleTable(result) {
           </tbody>
         </table>
         <div class="location-sidebar">
-          ${r.h1Rows.map(h => subRowsFor(h).map((sub, i) => `<div class="location-row">${i === 0 ? lineColBox(h.line, h.col) : ''}</div>`).join('')).join('')}
+          ${r.h1Rows.map(h => subRowsFor(h).map((sub, i) => `<div class="location-row">${i === 0 ? lineColBox(h.line) : ''}</div>`).join('')).join('')}
         </div>
       </div>`;
     } else if (r.name === 'copyrightFontSize' && r.copyrightRows && r.copyrightRows.length > 0) {
@@ -382,7 +380,7 @@ function buildRuleTable(result) {
           </tbody>
         </table>
         <div class="location-sidebar">
-          ${r.copyrightRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          ${r.copyrightRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
         </div>
       </div>`;
     } else if (r.name === 'doubleSpace') {
@@ -411,7 +409,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.doubleSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.doubleSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -441,7 +439,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.tabSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.tabSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -475,7 +473,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.capitalRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.capitalRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -511,7 +509,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.endPuncRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.endPuncRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -541,7 +539,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.ampersandRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.ampersandRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -571,7 +569,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.hyphenSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.hyphenSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -614,7 +612,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.numberHyphenRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.numberHyphenRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -631,7 +629,7 @@ function buildRuleTable(result) {
               <p class="rule-fail-text">Extra whitespace or line breaks detected after closing &lt;/html&gt; tag</p>
               <p class="rule-fail-text">Characters found: ${charCount}</p>
             </div>
-            ${lineColBox(trailingRow.line, trailingRow.col)}
+            ${lineColBox(trailingRow.line)}
           </div>`;
       }
     } else if (r.name === 'spaceAfterOpen') {
@@ -667,7 +665,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.spaceAfterOpenRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.spaceAfterOpenRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -704,7 +702,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.spaceBeforeCloseRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.spaceBeforeCloseRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -732,7 +730,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.dotAfterCloseRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.dotAfterCloseRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -764,7 +762,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.superscriptRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+            ${r.superscriptRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -814,7 +812,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.pagebreakRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.pagebreakRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>
           ${pagebreakOrderHtml}`;
@@ -849,7 +847,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.tableImageRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.tableImageRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -879,7 +877,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.referenceRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.referenceRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -911,7 +909,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.cssClassRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.cssClassRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -945,7 +943,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.figureImageRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.figureImageRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -973,7 +971,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.crossRefRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.crossRefRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1003,7 +1001,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.figureAnchorRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.figureAnchorRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1037,7 +1035,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.imageNameRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.imageNameRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1076,7 +1074,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.unwantedTagRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.unwantedTagRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1129,7 +1127,7 @@ function buildRuleTable(result) {
               <span style="font-weight:700;font-size:1rem;">${i + 1}. ${escapeHtml(a.text)}</span>
               <span style="color:var(--accent);margin-left:12px;font-family:monospace;font-size:0.95rem;">${escapeHtml(a.href)}</span>
             </span>
-            ${lineColBox(a.line, a.col)}
+            ${lineColBox(a.line)}
           </li>`).join('');
         tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
       }
@@ -1161,7 +1159,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.crossFileHrefRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.crossFileHrefRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1188,7 +1186,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.crossFileAnchors.map(a => `<div class="location-row">${lineColBox(a.line, a.col)}</div>`).join('')}
+            ${r.crossFileAnchors.map(a => `<div class="location-row">${lineColBox(a.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1216,7 +1214,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.tableStructureRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.tableStructureRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1242,7 +1240,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.boldSpaceRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.boldSpaceRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1269,7 +1267,7 @@ function buildRuleTable(result) {
             </tbody>
           </table>
           <div class="location-sidebar">
-            ${r.listParaRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+            ${r.listParaRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
           </div>
           </div>`;
       }
@@ -1346,7 +1344,7 @@ function buildRuleTable(result) {
           </tbody>
         </table>
         <div class="location-sidebar">
-          <div class="location-row">${lineColBox(r.line, r.col)}</div>
+          <div class="location-row">${lineColBox(r.line)}</div>
         </div>
       </div>`;
     }

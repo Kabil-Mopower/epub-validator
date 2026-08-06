@@ -13,8 +13,7 @@
 function getLineCol(text, index) {
   const lines = text.slice(0, index).split('\n');
   const line = lines.length;
-  const col = lines[lines.length - 1].length + 1;
-  return { line, col };
+  return { line };
 }
 
 /**
@@ -96,8 +95,8 @@ function parseXhtmlFirstTag(xhtmlText) {
 
   const bodyStart = bodyMatch.index + bodyMatch[0].length;
   const absoluteIndex = bodyStart + tagMatch.index;
-  const { line, col } = getLineCol(xhtmlText, absoluteIndex);
-  return { firstTag: tagName, firstTagClass: className.trim(), line, col };
+  const { line } = getLineCol(xhtmlText, absoluteIndex);
+  return { firstTag: tagName, firstTagClass: className.trim(), line };
 }
 
 function parseXhtmlHeadings(xhtmlText) {
@@ -116,8 +115,8 @@ function parseXhtmlHeadings(xhtmlText) {
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
     const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
-    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
-    results.push({ tagName, className, line, col });
+    const { line } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, line });
   }
 
   return results; // e.g. [{ tagName: 'h2', className: 'fty' }, ...]
@@ -140,8 +139,8 @@ function parseXhtmlAllTags(xhtmlText) {
     const idMatch = attributes.match(/id\s*=\s*"([^"]*)"|id\s*=\s*'([^']*)'/i);
     const id = idMatch ? (idMatch[1] || idMatch[2] || '').trim() : '';
     const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
-    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
-    results.push({ tagName, className, id, line, col });
+    const { line } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, id, line });
   }
 
   return results;
@@ -162,8 +161,8 @@ function parseXhtmlTagSequence(xhtmlText) {
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
     const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
-    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
-    results.push({ tagName, className, line, col });
+    const { line } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, line });
   }
 
   return results;
@@ -314,15 +313,15 @@ function scanTagSpacingHits(afterBody, xhtmlText, bodyOffset) {
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
 
-    const { line, col } = getLineCol(xhtmlText, bodyOffset + m.index);
+    const { line } = getLineCol(xhtmlText, bodyOffset + m.index);
 
     const textOnly = rawInner.replace(/<[^>]+>/g, '');
     if (/^[ \t]/.test(textOnly)) {
-      spaceAfterOpenHits.push({ tagName, className, text: rawInner.slice(0, 80), line, col });
+      spaceAfterOpenHits.push({ tagName, className, text: rawInner.slice(0, 80), line });
     }
 
     if (/[ \t]$/.test(textOnly)) {
-      spaceBeforeCloseHits.push({ tagName, className, text: rawInner.slice(-80), line, col });
+      spaceBeforeCloseHits.push({ tagName, className, text: rawInner.slice(-80), line });
     }
   }
 
@@ -357,32 +356,32 @@ function parseTextContent(xhtmlText) {
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
 
     const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
-    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+    const { line } = getLineCol(xhtmlText, absoluteIndex);
 
-    results.push({ tagName, className, text: innerText, rawInner, line, col });
+    results.push({ tagName, className, text: innerText, rawInner, line });
 
     if (/(?<! ) {2}(?! )/.test(innerText)) {
-      doubleSpaceHits.push({ tagName, className, text: innerText, line, col });
+      doubleSpaceHits.push({ tagName, className, text: innerText, line });
     }
 
     if (/   /.test(innerText)) {
-      tabSpaceHits.push({ tagName, className, text: innerText, line, col });
+      tabSpaceHits.push({ tagName, className, text: innerText, line });
     }
 
     if (tagName === 'p' && /^[a-z]/.test(innerText)) {
-      capitalHits.push({ tagName, className, text: innerText, line, col });
+      capitalHits.push({ tagName, className, text: innerText, line });
     }
 
     if (/&&/.test(innerText)) {
-      ampersandHits.push({ tagName, className, text: innerText, line, col });
+      ampersandHits.push({ tagName, className, text: innerText, line });
     }
 
     if (/- \S/.test(innerText)) {
-      hyphenSpaceHits.push({ tagName, className, text: innerText, line, col });
+      hyphenSpaceHits.push({ tagName, className, text: innerText, line });
     }
 
     if (/\d+-\d+/.test(innerText)) {
-      numberHyphenHits.push({ tagName, className, text: innerText, matches: innerText.match(/\d+-\d+/g), line, col });
+      numberHyphenHits.push({ tagName, className, text: innerText, matches: innerText.match(/\d+-\d+/g), line });
     }
   }
 
@@ -436,11 +435,11 @@ function parseUnwantedTags(xhtmlText) {
 
     if (full.startsWith('</')) {
       if (stack.length === 0 || stack[stack.length - 1].tag !== tagName) {
-        const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
+        const { line } = getLineCol(xhtmlText, bodyMatch.index + match.index);
         orphanClose.push({
           tagName,
           snippet: full,
-          line, col
+          line
         });
       } else {
         stack.pop();
@@ -457,12 +456,12 @@ function parseUnwantedTags(xhtmlText) {
   while ((match = emptyRegex.exec(bodyContent)) !== null) {
     const tagName = match[1].toLowerCase();
     if (skipTags.includes(tagName)) continue;
-    const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
+    const { line } = getLineCol(xhtmlText, bodyMatch.index + match.index);
     emptyTags.push({
       tagName,
       className: (match[2] || '').match(/class\s*=\s*["']([^"']*)["']/i)?.[1] || '',
       snippet: match[0],
-      line, col
+      line
     });
   }
 
@@ -483,8 +482,8 @@ function parseUnwantedTags(xhtmlText) {
         stack2.pop();
       }
     } else {
-      const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
-      stack2.push({ tag: tagName, full, snippet: full, line, col });
+      const { line } = getLineCol(xhtmlText, bodyMatch.index + match.index);
+      stack2.push({ tag: tagName, full, snippet: full, line });
     }
   }
 
@@ -493,8 +492,7 @@ function parseUnwantedTags(xhtmlText) {
     unclosedTags.push({
       tagName: t.tag,
       snippet: t.snippet,
-      line: t.line,
-      col: t.col
+      line: t.line
     });
   }
 
@@ -535,8 +533,8 @@ function parseCrossRefs(xhtmlText) {
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const { line, col } = getLineCol(plainText, match.index);
-      crossRefHits.push({ matchedText, pattern: pattern.source, line, col });
+      const { line } = getLineCol(plainText, match.index);
+      crossRefHits.push({ matchedText, pattern: pattern.source, line });
     }
   }
 
@@ -557,18 +555,17 @@ function parseFigureBlocks(xhtmlText) {
     const pTags = [];
     let pMatch;
     while ((pMatch = pRegex.exec(innerContent)) !== null) {
-      const { line, col } = getLineCol(xhtmlText, innerOffset + pMatch.index);
-      pTags.push({ tagName: 'p', className: pMatch[1], line, col });
+      const { line } = getLineCol(xhtmlText, innerOffset + pMatch.index);
+      pTags.push({ tagName: 'p', className: pMatch[1], line });
     }
 
-    const { line: blockLine, col: blockCol } = getLineCol(xhtmlText, match.index);
+    const { line: blockLine } = getLineCol(xhtmlText, match.index);
 
     figureBlocks.push({
       id,
       imageTag: pTags[0] || null,
       captionTag: pTags[1] || null,
-      line: blockLine,
-      col: blockCol
+      line: blockLine
     });
   }
 
@@ -590,12 +587,12 @@ function parseCssClassUsage(xhtmlText) {
     if (!classMatch) continue;
 
     const classes = classMatch[1].trim().split(/\s+/).filter(Boolean);
-    const { line, col } = getLineCol(xhtmlText, match.index);
+    const { line } = getLineCol(xhtmlText, match.index);
     for (const cls of classes) {
       const key = `${tagName}.${cls}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      usedClasses.push({ tagName, className: cls, line, col });
+      usedClasses.push({ tagName, className: cls, line });
     }
   }
 
@@ -639,7 +636,7 @@ function parseTableImages(xhtmlText) {
 
     const hasCaption = /<p[^>]+class\s*=\s*["'][^"']*\btabcaption\b[^"']*["']/i.test(innerContent);
     const hasImage = /<p[^>]+class\s*=\s*["'][^"']*\btabimage\b[^"']*["']/i.test(innerContent);
-    const { line, col } = getLineCol(xhtmlText, match.index);
+    const { line } = getLineCol(xhtmlText, match.index);
 
     tableImageBlocks.push({
       id,
@@ -647,7 +644,7 @@ function parseTableImages(xhtmlText) {
       hasImage,
       captionClass: 'tabcaption',
       imageClass: 'tabimage',
-      line, col
+      line
     });
   }
 
@@ -729,13 +726,13 @@ function parseSuperscripts(xhtmlText) {
       }
 
       if (missing.length > 0) {
-        const { line, col } = getLineCol(xhtmlText, supIndex);
+        const { line } = getLineCol(xhtmlText, supIndex);
         superscriptHits.push({
           text: match[0],
           issue: `Link target not found: ${missing.join(', ')}`,
           href: missing.join(', '),
           targetExists: false,
-          line, col
+          line
         });
       }
       continue;
@@ -746,13 +743,13 @@ function parseSuperscripts(xhtmlText) {
     const aHrefMatch = before.match(/<a\s+href\s*=\s*["']([^"']+)["'][^>]*>\s*$/i);
 
     if (!aHrefMatch) {
-      const { line, col } = getLineCol(xhtmlText, supIndex);
+      const { line } = getLineCol(xhtmlText, supIndex);
       superscriptHits.push({
         text: match[0],
         issue: 'Superscript not linked',
         href: null,
         targetExists: false,
-        line, col
+        line
       });
       continue;
     }
@@ -762,13 +759,13 @@ function parseSuperscripts(xhtmlText) {
     const targetExists = allIds.includes(targetId);
 
     if (!targetExists) {
-      const { line, col } = getLineCol(xhtmlText, supIndex);
+      const { line } = getLineCol(xhtmlText, supIndex);
       superscriptHits.push({
         text: match[0],
         issue: `Link target not found: ${href}`,
         href: href,
         targetExists: false,
-        line, col
+        line
       });
     }
   }
@@ -786,8 +783,8 @@ function parseDotAfterClose(xhtmlText) {
     const start = Math.max(0, match.index - 25);
     const end = Math.min(xhtmlText.length, dotAfterCloseRegex.lastIndex + 25);
     const snippet = xhtmlText.slice(start, end);
-    const { line, col } = getLineCol(xhtmlText, match.index);
-    dotAfterCloseHits.push({ tagName, snippet, line, col });
+    const { line } = getLineCol(xhtmlText, match.index);
+    dotAfterCloseHits.push({ tagName, snippet, line });
   }
 
   return dotAfterCloseHits;
@@ -809,7 +806,7 @@ function parseTrailingSpace(xhtmlText) {
 
 function parseTrailingSpaceLocation(xhtmlText) {
   const htmlCloseMatch = xhtmlText.match(/<\/html\s*>/i);
-  if (!htmlCloseMatch) return { line: '', col: '' };
+  if (!htmlCloseMatch) return { line: '' };
   return getLineCol(xhtmlText, htmlCloseMatch.index + htmlCloseMatch[0].length);
 }
 
@@ -857,13 +854,13 @@ function parseStylesheetLink(xhtmlText) {
     const rel   = (attrs.match(/rel\s*=\s*["']([^"']*)["']/i)  || [])[1] || '';
     const type  = (attrs.match(/type\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
     const href  = (attrs.match(/href\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
-    const { line, col } = getLineCol(xhtmlText, headOffset + m.index);
+    const { line } = getLineCol(xhtmlText, headOffset + m.index);
     if (rel === 'stylesheet') {
-      links.push({ rel, type, href, raw: m[0].trim(), line, col });
+      links.push({ rel, type, href, raw: m[0].trim(), line });
     }
   }
 
-  if (links.length === 0) return { found: false, actual: null, line: '', col: '' };
+  if (links.length === 0) return { found: false, actual: null, line: '' };
 
   const expected = '../styles/stylesheet.css';
   const match = links.find(l =>
@@ -875,8 +872,7 @@ function parseStylesheetLink(xhtmlText) {
   return {
     found: !!match,
     actual: links[0].raw,
-    line: links[0].line,
-    col: links[0].col
+    line: links[0].line
   };
 }
 
@@ -893,8 +889,8 @@ function parseAnchorTexts(xhtmlText) {
     const hrefM = attrs.match(/href\s*=\s*["']([^"']*)["']/i);
     const href = hrefM ? hrefM[1].trim() : '';
     if (text) {
-      const { line, col } = getLineCol(xhtmlText, m.index);
-      hits.push({ text, href, line, col });
+      const { line } = getLineCol(xhtmlText, m.index);
+      hits.push({ text, href, line });
     }
   }
   return hits;
@@ -918,8 +914,8 @@ function parseCrossFileAnchors(xhtmlText) {
     const href = hrefM[1].trim();
     if (!href || href.includes('#')) continue;
     const text = m[2].replace(/<[^>]+>/g, '').trim();
-    const { line, col } = getLineCol(xhtmlText, m.index);
-    hits.push({ href, text, line, col });
+    const { line } = getLineCol(xhtmlText, m.index);
+    hits.push({ href, text, line });
   }
   return hits;
 }
@@ -1097,7 +1093,6 @@ function parseTableStructure(text) {
 
     for (let i = tableIssuesStart; i < issues.length; i++) {
       issues[i].line = tableLoc.line;
-      issues[i].col = tableLoc.col;
     }
   }
 
@@ -1117,8 +1112,8 @@ function parseBoldSpace(text) {
     const content = match[1];
     const trimmedNewlines = content.replace(/^[\r\n]+/, '');
     if (/^[\u00A0 ]/.test(trimmedNewlines) || trimmedNewlines.startsWith('&nbsp;')) {
-      const { line, col } = getLineCol(text, match.index);
-      hits.push({ context: match[0], line, col });
+      const { line } = getLineCol(text, match.index);
+      hits.push({ context: match[0], line });
     }
   }
 
@@ -1142,11 +1137,11 @@ function parseListParaCheck(text) {
     const firstP = listContent.search(/<p[\s>]/i);
     const firstLi = listContent.search(/<li[\s>]/i);
     if (firstP !== -1 && (firstLi === -1 || firstP < firstLi)) {
-      const { line, col } = getLineCol(text, listMatch.index);
+      const { line } = getLineCol(text, listMatch.index);
       hits.push({
         type: '<p> directly inside <' + tag + '> without <li>',
         context: listMatch[0].slice(0, 120),
-        line, col
+        line
       });
     }
 
@@ -1155,11 +1150,11 @@ function parseListParaCheck(text) {
     // Wrong:    <ol><ul><li><p>text</p></li></ul></ol>
     const nestedListPos = listContent.search(/<(ol|ul)[\s>]/i);
     if (nestedListPos !== -1 && (firstLi === -1 || nestedListPos < firstLi)) {
-      const { line, col } = getLineCol(text, listMatch.index);
+      const { line } = getLineCol(text, listMatch.index);
       hits.push({
         type: 'Nested <ol>/<ul> without <li> wrapper',
         context: listMatch[0].slice(0, 120),
-        line, col
+        line
       });
     }
 
@@ -1169,11 +1164,11 @@ function parseListParaCheck(text) {
     const emptyLiRegex = /<li[^>]*>\s*<\/li>/gi;
     let emptyLiMatch;
     while ((emptyLiMatch = emptyLiRegex.exec(listContent)) !== null) {
-      const { line, col } = getLineCol(text, listContentOffset + emptyLiMatch.index);
+      const { line } = getLineCol(text, listContentOffset + emptyLiMatch.index);
       hits.push({
         type: 'Empty <li>',
         context: emptyLiMatch[0],
-        line, col
+        line
       });
     }
 
@@ -1183,11 +1178,11 @@ function parseListParaCheck(text) {
     const emptyPInLiRegex = /<li[^>]*>[\s\S]*?<p[^>]*>\s*<\/p>[\s\S]*?<\/li>/gi;
     let emptyPMatch;
     while ((emptyPMatch = emptyPInLiRegex.exec(listContent)) !== null) {
-      const { line, col } = getLineCol(text, listContentOffset + emptyPMatch.index);
+      const { line } = getLineCol(text, listContentOffset + emptyPMatch.index);
       hits.push({
         type: 'Empty <p> inside <li>',
         context: emptyPMatch[0].slice(0, 120),
-        line, col
+        line
       });
     }
 
@@ -1199,11 +1194,11 @@ function parseListParaCheck(text) {
     while ((liOpen = liOpenRegex.exec(listContent)) !== null) {
       const afterLi = listContent.slice(liOpen.index + liOpen[0].length);
       if (!/^[\s\S]*?<\/li>/i.test(afterLi)) {
-        const { line, col } = getLineCol(text, listContentOffset + liOpen.index);
+        const { line } = getLineCol(text, listContentOffset + liOpen.index);
         hits.push({
           type: 'Unclosed <li>',
           context: liOpen[0],
-          line, col
+          line
         });
       }
     }
@@ -1216,11 +1211,11 @@ function parseListParaCheck(text) {
   const orphanLiRegex = /<li[\s>]/gi;
   let orphan;
   while ((orphan = orphanLiRegex.exec(strippedText)) !== null) {
-    const { line, col } = getLineCol(strippedText, orphan.index);
+    const { line } = getLineCol(strippedText, orphan.index);
     hits.push({
       type: 'Orphan <li> outside any list',
       context: strippedText.slice(orphan.index, orphan.index + 80),
-      line, col
+      line
     });
   }
 

@@ -448,7 +448,7 @@ async function runValidation(fileList) {
   const parsedFiles = [];
   for (const file of xhtmlFiles) {
     const xhtmlText   = await readFileAsText(file);
-    const { firstTag, firstTagClass, line: firstTagLine, col: firstTagCol } = parseXhtmlFirstTag(xhtmlText);
+    const { firstTag, firstTagClass, line: firstTagLine } = parseXhtmlFirstTag(xhtmlText);
     const headings    = parseXhtmlHeadings(xhtmlText);
     const allTags     = parseXhtmlAllTags(xhtmlText);
     const tagSequence = parseXhtmlTagSequence(xhtmlText);
@@ -485,7 +485,6 @@ async function runValidation(fileList) {
       firstTag,
       firstTagClass,
       line: firstTagLine,
-      col: firstTagCol,
       headings,
       allTags,
       tagSequence,

@@ -2468,13 +2468,13 @@ body {
 
 .line-col-box {
   display: inline-grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 0.72rem;
   overflow: hidden;
   vertical-align: middle;
-  min-width: 90px;
+  min-width: 60px;
 }
 
 .line-col-box .lc-header {
