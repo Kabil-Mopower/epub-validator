@@ -448,7 +448,7 @@ async function runValidation(fileList) {
   const parsedFiles = [];
   for (const file of xhtmlFiles) {
     const xhtmlText   = await readFileAsText(file);
-    const { firstTag, firstTagClass } = parseXhtmlFirstTag(xhtmlText);
+    const { firstTag, firstTagClass, line: firstTagLine, col: firstTagCol } = parseXhtmlFirstTag(xhtmlText);
     const headings    = parseXhtmlHeadings(xhtmlText);
     const allTags     = parseXhtmlAllTags(xhtmlText);
     const tagSequence = parseXhtmlTagSequence(xhtmlText);
@@ -459,11 +459,12 @@ async function runValidation(fileList) {
     const superscriptHits = parseSuperscripts(xhtmlText);
     const pagebreakResult = parsePagebreaks(xhtmlText);
     const tableImageBlocks = parseTableImages(xhtmlText);
-    const { refIds, refHrefs, uncalledRefs, brokenLinks } = parseReferences(xhtmlText);
+    const { refIds, refHrefs, uncalledRefs, brokenLinks, refLocations, hrefLocations } = parseReferences(xhtmlText);
     const usedCssClasses = parseCssClassUsage(xhtmlText);
     const figureBlocks = parseFigureBlocks(xhtmlText);
     const crossRefHits = parseCrossRefs(xhtmlText);
     const imageSrcs = parseImageSrcs(xhtmlText);
+    const imageSrcLocations = parseImageSrcLocations(xhtmlText);
     const anchorTexts = parseAnchorTexts(xhtmlText);
     const figureAnchors = parseFigureAnchors(xhtmlText);
     const crossFileAnchors = parseCrossFileAnchors(xhtmlText);
@@ -473,6 +474,7 @@ async function runValidation(fileList) {
     const boldSpaceHits = parseBoldSpace(xhtmlText);
     const listParaHits = parseListParaCheck(xhtmlText);
     const hasTrailingSpace = parseTrailingSpace(xhtmlText);
+    const trailingSpaceLocation = parseTrailingSpaceLocation(xhtmlText);
     const trailingSpaceContent = xhtmlText.slice(
       xhtmlText.search(/<\/html\s*>/i) + '</html>'.length
     ).length;
@@ -482,6 +484,8 @@ async function runValidation(fileList) {
       matterType: groupingSkipped ? 'unassigned' : getMatterType(fileName),
       firstTag,
       firstTagClass,
+      line: firstTagLine,
+      col: firstTagCol,
       headings,
       allTags,
       tagSequence,
@@ -504,10 +508,13 @@ async function runValidation(fileList) {
       refHrefTargets: refHrefs,
       uncalledRefs,
       brokenRefLinks: brokenLinks,
+      refLocations,
+      hrefLocations,
       usedCssClasses,
       figureBlocks,
       crossRefHits,
       imageSrcs,
+      imageSrcLocations,
       anchorTexts,
       figureAnchors,
       crossFileAnchors,
@@ -519,6 +526,7 @@ async function runValidation(fileList) {
       boldSpaceHits,
       listParaHits,
       hasTrailingSpace,
+      trailingSpaceLocation,
       trailingSpaceContent,
       title,
       cssRules,

@@ -2439,3 +2439,56 @@ body {
   color: white;
   border-color: var(--accent);
 }
+
+.table-location-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.table-location-wrapper > .rule-mini-table {
+  flex: 1;
+  min-width: 0;
+}
+
+.location-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 36px; /* offset for thead height */
+  flex-shrink: 0;
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  height: 40px; /* match tr height */
+}
+
+.line-col-box {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  overflow: hidden;
+  vertical-align: middle;
+  min-width: 90px;
+}
+
+.line-col-box .lc-header {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 2px 10px;
+  text-align: center;
+}
+
+.line-col-box .lc-value {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 2px 10px;
+  text-align: center;
+  font-weight: 600;
+}

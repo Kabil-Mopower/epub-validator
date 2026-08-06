@@ -66,6 +66,8 @@ function ruleFirstTagMarginTop(fileData, cssRules) {
     firstTag: firstTag,
     className: className,
     marginTopValue: marginTopValue || "(not set)",
+    line: fileData.line || '',
+    col: fileData.col || '',
     reason: pass ? "" : (marginTopValue ? `margin-top expected ${REQUIRED_VALUE}, found: ${marginTopValue}` : 'margin-top not defined in stylesheet')
   };
 }
@@ -177,6 +179,8 @@ function ruleFmtitleMargins(fileData, cssRules) {
     className: className,
     marginTopValue: marginTop || '(not set)',
     marginBottomValue: marginBottom || '(not set)',
+    line: fileData.line || '',
+    col: fileData.col || '',
     reason: reasons.join('; ')
   };
 }
@@ -257,6 +261,8 @@ function ruleHeadingStyles(fileData, cssRules) {
         marginBottomPass: false,
         fontSizePass: false,
         pass: false,
+        line: h.line || '',
+        col: h.col || '',
         reason: msg
       });
       continue;
@@ -279,6 +285,8 @@ function ruleHeadingStyles(fileData, cssRules) {
         fontSizePass: true,
         pass: true,
         notApplicable: true,
+        line: h.line || '',
+        col: h.col || '',
         reason: `Class "${h.className}" does not start with tag name "${h.tagName}" — skipped`
       });
       continue;
@@ -313,6 +321,8 @@ function ruleHeadingStyles(fileData, cssRules) {
       marginBottomPass,
       fontSizePass,
       pass: rowFailures.length === 0,
+      line: h.line || '',
+      col: h.col || '',
       reason: rowFailures.join('; ')
     });
   }
@@ -389,6 +399,8 @@ function ruleFootnoteClasses(fileData, cssRules) {
         fontSizePass: false,
         pass: false,
         warning: true,
+        line: t.line || '',
+        col: t.col || '',
         reason: `Warning: class "${matchedClass}" should be on a <p> tag, found on <${t.tagName}>`
       });
       overallPass = false;
@@ -412,6 +424,8 @@ function ruleFootnoteClasses(fileData, cssRules) {
         fontSizePass: false,
         pass: false,
         warning: false,
+        line: t.line || '',
+        col: t.col || '',
         reason: `Style not found in stylesheet for class "${t.className}"`
       });
       overallPass = false;
@@ -431,6 +445,8 @@ function ruleFootnoteClasses(fileData, cssRules) {
       fontSizePass,
       pass: fontSizePass,
       warning: false,
+      line: t.line || '',
+      col: t.col || '',
       reason: fontSizePass ? '' : (fontSize ? `font-size expected 90%, found: ${fontSize}` : 'font-size not defined in stylesheet')
     });
   }
@@ -530,6 +546,8 @@ function ruleH1AuthorH2(fileData, cssRules) {
       h2Class: s.h2.className,
       h1Top, h1Bottom, pTop, pBottom, h2Top, h2Bottom,
       pass,
+      line: s.h1.line || '',
+      col: s.h1.col || '',
       reason: failures.join('; ')
     });
   }
@@ -611,6 +629,8 @@ function ruleH1AuthorP(fileData, cssRules) {
       paraClass: s.para.className,
       h1Top, h1Bottom, pTop, pBottom, p2Top,
       pass,
+      line: s.h1.line || '',
+      col: s.h1.col || '',
       reason: failures.join('; ')
     });
   }
@@ -683,6 +703,8 @@ function ruleH1H2(fileData, cssRules) {
       h2Class: s.h2.className,
       h1Top, h1Bottom, h2Top, h2Bottom,
       pass,
+      line: s.h1.line || '',
+      col: s.h1.col || '',
       reason: failures.join('; ')
     });
   }
@@ -756,6 +778,8 @@ function ruleH1P(fileData, cssRules) {
       paraClass: s.para.className,
       h1Top, h1Bottom, pTop,
       pass,
+      line: s.h1.line || '',
+      col: s.h1.col || '',
       reason: failures.join('; ')
     });
   }
@@ -855,6 +879,8 @@ function ruleCopyrightFontSize(fileData, cssRules) {
         fontSize: '(not set)',
         fontSizePass: false,
         pass: false,
+        line: t.line || '',
+        col: t.col || '',
         reason: `Style not found in stylesheet for class "${t.className}"`
       });
       overallPass = false;
@@ -873,6 +899,8 @@ function ruleCopyrightFontSize(fileData, cssRules) {
       fontSize: fontSize || '(not set)',
       fontSizePass,
       pass: fontSizePass,
+      line: t.line || '',
+      col: t.col || '',
       reason: fontSizePass ? '' : (fontSize ? `font-size expected 100%, found: ${fontSize}` : 'font-size not defined in stylesheet')
     });
   }
@@ -914,7 +942,9 @@ function ruleDoubleSpace(fileData, cssRules) {
   const rows = hits.map(h => ({
     tagName: h.tagName,
     className: h.className || '(none)',
-    text: h.text
+    text: h.text,
+    line: h.line || '',
+    col: h.col || ''
   }));
 
   return {
@@ -958,7 +988,9 @@ function ruleTabSpace(fileData, cssRules) {
     tabSpaceRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tab space(s) found`
   };
@@ -989,7 +1021,9 @@ function ruleCapitalAfterP(fileData, cssRules) {
     capitalRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} <p> tag(s) start with lowercase`
   };
@@ -1033,7 +1067,9 @@ function ruleEndPunctuation(fileData, cssRules) {
     endPuncRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} <p> tag(s) missing end punctuation before next <p>`
   };
@@ -1064,7 +1100,9 @@ function ruleAmpersand(fileData, cssRules) {
     ampersandRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tag(s) contain &&`
   };
@@ -1095,7 +1133,9 @@ function ruleHyphenSpace(fileData, cssRules) {
     hyphenSpaceRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tag(s) contain hyphen followed by space`
   };
@@ -1131,7 +1171,9 @@ function ruleNumberHyphen(fileData, cssRules) {
       tagName: h.tagName,
       className: h.className || '(none)',
       text: h.text,
-      matches: h.matches || []
+      matches: h.matches || [],
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tag(s) contain number-hyphen-number (use en dash instead)`
   };
@@ -1162,7 +1204,7 @@ function ruleTrailingSpace(fileData, cssRules) {
     notApplicable: false,
     firstTag: '', className: '',
     marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
-    trailingSpaceRows: [{ charCount }],
+    trailingSpaceRows: [{ charCount, line: (fileData.trailingSpaceLocation && fileData.trailingSpaceLocation.line) || '', col: (fileData.trailingSpaceLocation && fileData.trailingSpaceLocation.col) || '' }],
     reason: `${charCount} character(s) found after </html>`
   };
 }
@@ -1192,7 +1234,9 @@ function ruleSpaceAfterOpen(fileData, cssRules) {
     spaceAfterOpenRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tag(s) have space after opening tag`
   };
@@ -1223,7 +1267,9 @@ function ruleSpaceBeforeClose(fileData, cssRules) {
     spaceBeforeCloseRows: hits.map(h => ({
       tagName: h.tagName,
       className: h.className || '(none)',
-      text: h.text
+      text: h.text,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} tag(s) have space before closing tag`
   };
@@ -1253,7 +1299,9 @@ function ruleDotAfterClose(fileData, cssRules) {
     marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
     dotAfterCloseRows: hits.map(h => ({
       tagName: h.tagName,
-      snippet: h.snippet
+      snippet: h.snippet,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} closing tag(s) followed by a dot`
   };
@@ -1302,7 +1350,9 @@ function ruleSuperscriptLink(fileData, cssRules) {
       text: h.text,
       issue: h.issue,
       href: h.href || '(none)',
-      targetExists: h.targetExists
+      targetExists: h.targetExists,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} superscript(s) have link issues`
   };
@@ -1671,6 +1721,8 @@ function ruleTableImage(fileData, cssRules) {
       hasCaption: block.hasCaption,
       hasImage: block.hasImage,
       pass: rowFailures.length === 0,
+      line: block.line || '',
+      col: block.col || '',
       reason: rowFailures.join('; ')
     });
   }
@@ -1714,13 +1766,18 @@ function ruleReferenceCheck(fileData, cssRules) {
 
   const rows = [];
 
+  const refLocations = fileData.refLocations || {};
+  const hrefLocations = fileData.hrefLocations || {};
+
   // Check 1 rows — uncalled refs
   for (const id of uncalledRefs) {
     rows.push({
       type: 'Uncalled Reference',
       id: id,
       issue: `<p class="ref" id="${id}"> is never linked in this file`,
-      pass: false
+      pass: false,
+      line: (refLocations[id] && refLocations[id].line) || '',
+      col: (refLocations[id] && refLocations[id].col) || ''
     });
   }
 
@@ -1730,7 +1787,9 @@ function ruleReferenceCheck(fileData, cssRules) {
       type: 'Broken Link',
       id: id,
       issue: `<a href="#${id}"> points to a ref that does not exist`,
-      pass: false
+      pass: false,
+      line: (hrefLocations[id] && hrefLocations[id].line) || '',
+      col: (hrefLocations[id] && hrefLocations[id].col) || ''
     });
   }
 
@@ -1770,7 +1829,7 @@ function ruleCssClassCheck(fileData, cssRules) {
   const rows = [];
   let overallPass = true;
 
-  for (const { tagName, className } of usedClasses) {
+  for (const { tagName, className, line, col } of usedClasses) {
 
     // Check both .className and tag.className in cssRules
     const bareKey = className;
@@ -1787,6 +1846,8 @@ function ruleCssClassCheck(fileData, cssRules) {
         className,
         lookedFor: [`.${className}`, `${tagName}.${className}`],
         found: false,
+        line: line || '',
+        col: col || '',
         reason: `Class "${className}" not found in stylesheet`
       });
     }
@@ -1904,6 +1965,8 @@ function ruleFigureImage(fileData, cssRules) {
       imageClass: block.imageTag ? block.imageTag.className : '(missing)',
       captionClass: block.captionTag ? block.captionTag.className : '(missing)',
       pass: rowFailures.length === 0,
+      line: block.line || '',
+      col: block.col || '',
       reason: rowFailures.join('; ')
     });
   }
@@ -1949,7 +2012,9 @@ function ruleCrossRefLink(fileData, cssRules) {
     crossRefRows: hits.map(h => ({
       matchedText: h.matchedText,
       pattern: h.pattern,
-      issue: `"${h.matchedText}" is not wrapped in <a href>`
+      issue: `"${h.matchedText}" is not wrapped in <a href>`,
+      line: h.line || '',
+      col: h.col || ''
     })),
     reason: `${hits.length} cross reference(s) not linked`
   };
@@ -1987,7 +2052,9 @@ function ruleUnwantedTag(fileData, cssRules) {
       tagName: t.tagName,
       className: t.className || '(none)',
       snippet: t.snippet,
-      issue: `<${t.tagName}> is empty (no content)`
+      issue: `<${t.tagName}> is empty (no content)`,
+      line: t.line || '',
+      col: t.col || ''
     });
   }
 
@@ -1997,7 +2064,9 @@ function ruleUnwantedTag(fileData, cssRules) {
       tagName: t.tagName,
       className: '—',
       snippet: t.snippet,
-      issue: `</${t.tagName}> found without matching opening tag`
+      issue: `</${t.tagName}> found without matching opening tag`,
+      line: t.line || '',
+      col: t.col || ''
     });
   }
 
@@ -2007,7 +2076,9 @@ function ruleUnwantedTag(fileData, cssRules) {
       tagName: t.tagName,
       className: '—',
       snippet: t.snippet,
-      issue: `<${t.tagName}> opened but never closed`
+      issue: `<${t.tagName}> opened but never closed`,
+      line: t.line || '',
+      col: t.col || ''
     });
   }
 
@@ -2068,10 +2139,12 @@ function ruleImageNameCheck(fileData, cssRules) {
 
   const rows = [];
   let wrongNameCount = 0;
+  const imageSrcLocations = fileData.imageSrcLocations || {};
 
   for (const filename of images) {
     const m = filename.match(namePattern);
     const patternPass = !!m;
+    const loc = imageSrcLocations[filename] || {};
 
     if (!patternPass) {
       const generic = filename.match(genericPattern);
@@ -2086,6 +2159,8 @@ function ruleImageNameCheck(fileData, cssRules) {
         patternPass: false,
         sequenceIssue: false,
         pass: false,
+        line: loc.line || '',
+        col: loc.col || '',
         reason
       });
       continue;
@@ -2099,6 +2174,8 @@ function ruleImageNameCheck(fileData, cssRules) {
       patternPass: true,
       sequenceIssue: false,
       pass: true,
+      line: loc.line || '',
+      col: loc.col || '',
       reason: ''
     });
   }
@@ -2190,6 +2267,8 @@ function ruleCrossFileHrefCheck(fileData) {
       href: a.href,
       text: a.text,
       pass,
+      line: a.line || '',
+      col: a.col || '',
       reason: pass ? '' : `href "${a.href}" does not end with .xhtml`
     };
   });
@@ -2234,7 +2313,9 @@ function ruleStylesheetLinkCheck(fileData) {
       : result.actual
         ? `Incorrect stylesheet link found: ${result.actual}`
         : 'Stylesheet <link> tag is missing from <head>.',
-    actual: result.actual
+    actual: result.actual,
+    line: result.line || '',
+    col: result.col || ''
   };
 }
 ruleStylesheetLinkCheck.ruleName = 'stylesheetLinkCheck';
@@ -2246,25 +2327,31 @@ ruleFootnoteClasses.ruleName   = 'footnoteClasses';
 ruleCopyrightFontSize.ruleName = 'copyrightFontSize';
 
 function ruleFigureAnchorCheck(fileData) {
-  const { ids, hrefs } = fileData.figureAnchors || { ids: [], hrefs: [] };
+  const { ids, hrefs, idLocations, hrefLocations } = fileData.figureAnchors || { ids: [], hrefs: [], idLocations: {}, hrefLocations: {} };
   const figureAnchorRows = [];
 
   for (const id of ids) {
     if (!hrefs.includes(id)) {
+      const loc = (idLocations && idLocations[id]) || {};
       figureAnchorRows.push({
         type: 'Orphan ID',
         id,
-        issue: `id="${id}" is never linked by any <a href="#${id}">`
+        issue: `id="${id}" is never linked by any <a href="#${id}">`,
+        line: loc.line || '',
+        col: loc.col || ''
       });
     }
   }
 
   for (const href of hrefs) {
     if (!ids.includes(href)) {
+      const loc = (hrefLocations && hrefLocations[href]) || {};
       figureAnchorRows.push({
         type: 'Broken href',
         id: href,
-        issue: `<a href="#${href}"> has no matching id="${href}" in this file`
+        issue: `<a href="#${href}"> has no matching id="${href}" in this file`,
+        line: loc.line || '',
+        col: loc.col || ''
       });
     }
   }
@@ -2361,7 +2448,7 @@ function ruleTableStructureCheck(fileData, cssRules) {
     notApplicable: false,
     firstTag: '', className: '',
     marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
-    tableStructureRows: issues.map(i => ({ type: i.type, detail: i.detail })),
+    tableStructureRows: issues.map(i => ({ type: i.type, detail: i.detail, line: i.line || '', col: i.col || '' })),
     reason: `${issues.length} table structure issue(s) found`
   };
 }
@@ -2406,7 +2493,7 @@ function ruleBoldSpaceCheck(fileData, cssRules) {
     notApplicable: false,
     firstTag: '', className: '',
     marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
-    boldSpaceRows: hits.map(h => ({ context: h.context })),
+    boldSpaceRows: hits.map(h => ({ context: h.context, line: h.line || '', col: h.col || '' })),
     reason: `${hits.length} <b> tag(s) start with a space`
   };
 }
@@ -2440,7 +2527,7 @@ function ruleListParaCheck(fileData) {
     pass: false, notApplicable: false,
     firstTag: '', className: '',
     marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
-    listParaRows: hits.map(h => ({ type: h.type, context: h.context })),
+    listParaRows: hits.map(h => ({ type: h.type, context: h.context, line: h.line || '', col: h.col || '' })),
     reason: `${hits.length} list structure issue(s) found`
   };
 }

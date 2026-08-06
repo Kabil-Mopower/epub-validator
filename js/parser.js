@@ -10,6 +10,13 @@
        { className: { property: value, ... } }.
    ============================================================ */
 
+function getLineCol(text, index) {
+  const lines = text.slice(0, index).split('\n');
+  const line = lines.length;
+  const col = lines[lines.length - 1].length + 1;
+  return { line, col };
+}
+
 /**
  * Given the FileList from the folder picker, find:
  *  - all XHTML files under OPS/xhtml/**
@@ -87,7 +94,10 @@ function parseXhtmlFirstTag(xhtmlText) {
     ? (classMatch[1] || classMatch[2] || "")
     : "";
 
-  return { firstTag: tagName, firstTagClass: className.trim() };
+  const bodyStart = bodyMatch.index + bodyMatch[0].length;
+  const absoluteIndex = bodyStart + tagMatch.index;
+  const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+  return { firstTag: tagName, firstTagClass: className.trim(), line, col };
 }
 
 function parseXhtmlHeadings(xhtmlText) {
@@ -105,7 +115,9 @@ function parseXhtmlHeadings(xhtmlText) {
     const attributes = match[2] || '';
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
-    results.push({ tagName, className });
+    const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
+    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, line, col });
   }
 
   return results; // e.g. [{ tagName: 'h2', className: 'fty' }, ...]
@@ -127,7 +139,9 @@ function parseXhtmlAllTags(xhtmlText) {
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
     const idMatch = attributes.match(/id\s*=\s*"([^"]*)"|id\s*=\s*'([^']*)'/i);
     const id = idMatch ? (idMatch[1] || idMatch[2] || '').trim() : '';
-    results.push({ tagName, className, id });
+    const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
+    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, id, line, col });
   }
 
   return results;
@@ -147,7 +161,9 @@ function parseXhtmlTagSequence(xhtmlText) {
     const attributes = match[2] || '';
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
-    results.push({ tagName, className });
+    const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
+    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+    results.push({ tagName, className, line, col });
   }
 
   return results;
@@ -274,7 +290,7 @@ const SPACING_CHECK_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'li', 'dt', 'dd',
  * before the closing tag. Self-closing tags (<br/>, <a id="x"/>, ...)
  * and any tag not in the whitelist are skipped.
  */
-function scanTagSpacingHits(afterBody) {
+function scanTagSpacingHits(afterBody, xhtmlText, bodyOffset) {
   const spaceAfterOpenHits = [];
   const spaceBeforeCloseHits = [];
 
@@ -298,13 +314,15 @@ function scanTagSpacingHits(afterBody) {
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
 
+    const { line, col } = getLineCol(xhtmlText, bodyOffset + m.index);
+
     const textOnly = rawInner.replace(/<[^>]+>/g, '');
     if (/^[ \t]/.test(textOnly)) {
-      spaceAfterOpenHits.push({ tagName, className, text: rawInner.slice(0, 80) });
+      spaceAfterOpenHits.push({ tagName, className, text: rawInner.slice(0, 80), line, col });
     }
 
     if (/[ \t]$/.test(textOnly)) {
-      spaceBeforeCloseHits.push({ tagName, className, text: rawInner.slice(-80) });
+      spaceBeforeCloseHits.push({ tagName, className, text: rawInner.slice(-80), line, col });
     }
   }
 
@@ -338,34 +356,37 @@ function parseTextContent(xhtmlText) {
     const classMatch = attributes.match(/class\s*=\s*"([^"]*)"|class\s*=\s*'([^']*)'/i);
     const className = classMatch ? (classMatch[1] || classMatch[2] || '').trim() : '';
 
-    results.push({ tagName, className, text: innerText, rawInner });
+    const absoluteIndex = bodyMatch.index + bodyMatch[0].length + match.index;
+    const { line, col } = getLineCol(xhtmlText, absoluteIndex);
+
+    results.push({ tagName, className, text: innerText, rawInner, line, col });
 
     if (/(?<! ) {2}(?! )/.test(innerText)) {
-      doubleSpaceHits.push({ tagName, className, text: innerText });
+      doubleSpaceHits.push({ tagName, className, text: innerText, line, col });
     }
 
     if (/   /.test(innerText)) {
-      tabSpaceHits.push({ tagName, className, text: innerText });
+      tabSpaceHits.push({ tagName, className, text: innerText, line, col });
     }
 
     if (tagName === 'p' && /^[a-z]/.test(innerText)) {
-      capitalHits.push({ tagName, className, text: innerText });
+      capitalHits.push({ tagName, className, text: innerText, line, col });
     }
 
     if (/&&/.test(innerText)) {
-      ampersandHits.push({ tagName, className, text: innerText });
+      ampersandHits.push({ tagName, className, text: innerText, line, col });
     }
 
     if (/- \S/.test(innerText)) {
-      hyphenSpaceHits.push({ tagName, className, text: innerText });
+      hyphenSpaceHits.push({ tagName, className, text: innerText, line, col });
     }
 
     if (/\d+-\d+/.test(innerText)) {
-      numberHyphenHits.push({ tagName, className, text: innerText, matches: innerText.match(/\d+-\d+/g) });
+      numberHyphenHits.push({ tagName, className, text: innerText, matches: innerText.match(/\d+-\d+/g), line, col });
     }
   }
 
-  const { spaceAfterOpenHits, spaceBeforeCloseHits } = scanTagSpacingHits(afterBody);
+  const { spaceAfterOpenHits, spaceBeforeCloseHits } = scanTagSpacingHits(afterBody, xhtmlText, bodyMatch.index + bodyMatch[0].length);
 
   const pTags = results.filter(t => {
     if (t.tagName !== 'p') return false;
@@ -415,9 +436,11 @@ function parseUnwantedTags(xhtmlText) {
 
     if (full.startsWith('</')) {
       if (stack.length === 0 || stack[stack.length - 1].tag !== tagName) {
+        const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
         orphanClose.push({
           tagName,
-          snippet: full
+          snippet: full,
+          line, col
         });
       } else {
         stack.pop();
@@ -434,10 +457,12 @@ function parseUnwantedTags(xhtmlText) {
   while ((match = emptyRegex.exec(bodyContent)) !== null) {
     const tagName = match[1].toLowerCase();
     if (skipTags.includes(tagName)) continue;
+    const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
     emptyTags.push({
       tagName,
       className: (match[2] || '').match(/class\s*=\s*["']([^"']*)["']/i)?.[1] || '',
-      snippet: match[0]
+      snippet: match[0],
+      line, col
     });
   }
 
@@ -458,7 +483,8 @@ function parseUnwantedTags(xhtmlText) {
         stack2.pop();
       }
     } else {
-      stack2.push({ tag: tagName, full, snippet: full });
+      const { line, col } = getLineCol(xhtmlText, bodyMatch.index + match.index);
+      stack2.push({ tag: tagName, full, snippet: full, line, col });
     }
   }
 
@@ -466,7 +492,9 @@ function parseUnwantedTags(xhtmlText) {
     if (['html', 'head', 'body'].includes(t.tag)) continue;
     unclosedTags.push({
       tagName: t.tag,
-      snippet: t.snippet
+      snippet: t.snippet,
+      line: t.line,
+      col: t.col
     });
   }
 
@@ -507,7 +535,8 @@ function parseCrossRefs(xhtmlText) {
       if (seen.has(key)) continue;
       seen.add(key);
 
-      crossRefHits.push({ matchedText, pattern: pattern.source });
+      const { line, col } = getLineCol(plainText, match.index);
+      crossRefHits.push({ matchedText, pattern: pattern.source, line, col });
     }
   }
 
@@ -523,17 +552,23 @@ function parseFigureBlocks(xhtmlText) {
   while ((match = divRegex.exec(xhtmlText)) !== null) {
     const id = match[1];
     const innerContent = match[2];
+    const innerOffset = match.index + match[0].indexOf(innerContent);
 
     const pTags = [];
     let pMatch;
     while ((pMatch = pRegex.exec(innerContent)) !== null) {
-      pTags.push({ tagName: 'p', className: pMatch[1] });
+      const { line, col } = getLineCol(xhtmlText, innerOffset + pMatch.index);
+      pTags.push({ tagName: 'p', className: pMatch[1], line, col });
     }
+
+    const { line: blockLine, col: blockCol } = getLineCol(xhtmlText, match.index);
 
     figureBlocks.push({
       id,
       imageTag: pTags[0] || null,
-      captionTag: pTags[1] || null
+      captionTag: pTags[1] || null,
+      line: blockLine,
+      col: blockCol
     });
   }
 
@@ -555,11 +590,12 @@ function parseCssClassUsage(xhtmlText) {
     if (!classMatch) continue;
 
     const classes = classMatch[1].trim().split(/\s+/).filter(Boolean);
+    const { line, col } = getLineCol(xhtmlText, match.index);
     for (const cls of classes) {
       const key = `${tagName}.${cls}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      usedClasses.push({ tagName, className: cls });
+      usedClasses.push({ tagName, className: cls, line, col });
     }
   }
 
@@ -569,15 +605,19 @@ function parseCssClassUsage(xhtmlText) {
 function parseReferences(xhtmlText) {
   const refRegex = /<p[^>]+class\s*=\s*["'][^"']*ref[^"']*["'][^>]+id\s*=\s*["']([^"']+)["'][^>]*>/gi;
   const refIds = [];
+  const refLocations = {};
   let match;
   while ((match = refRegex.exec(xhtmlText)) !== null) {
     refIds.push(match[1]);
+    refLocations[match[1]] = getLineCol(xhtmlText, match.index);
   }
 
   const hrefRegex = /<a[^>]+href\s*=\s*["']#([^"']+)["'][^>]*>/gi;
   const hrefTargets = [];
+  const hrefLocations = {};
   while ((match = hrefRegex.exec(xhtmlText)) !== null) {
     hrefTargets.push(match[1]);
+    hrefLocations[match[1]] = getLineCol(xhtmlText, match.index);
   }
 
   const uncalledRefs = refIds.filter(id => !hrefTargets.includes(id));
@@ -585,7 +625,7 @@ function parseReferences(xhtmlText) {
   const refHrefs = hrefTargets.filter(id => /\.b\d+$/.test(id));
   const brokenLinks = refHrefs.filter(id => !refIds.includes(id));
 
-  return { refIds, refHrefs, uncalledRefs, brokenLinks };
+  return { refIds, refHrefs, uncalledRefs, brokenLinks, refLocations, hrefLocations };
 }
 
 function parseTableImages(xhtmlText) {
@@ -599,13 +639,15 @@ function parseTableImages(xhtmlText) {
 
     const hasCaption = /<p[^>]+class\s*=\s*["'][^"']*\btabcaption\b[^"']*["']/i.test(innerContent);
     const hasImage = /<p[^>]+class\s*=\s*["'][^"']*\btabimage\b[^"']*["']/i.test(innerContent);
+    const { line, col } = getLineCol(xhtmlText, match.index);
 
     tableImageBlocks.push({
       id,
       hasCaption,
       hasImage,
       captionClass: 'tabcaption',
-      imageClass: 'tabimage'
+      imageClass: 'tabimage',
+      line, col
     });
   }
 
@@ -687,11 +729,13 @@ function parseSuperscripts(xhtmlText) {
       }
 
       if (missing.length > 0) {
+        const { line, col } = getLineCol(xhtmlText, supIndex);
         superscriptHits.push({
           text: match[0],
           issue: `Link target not found: ${missing.join(', ')}`,
           href: missing.join(', '),
-          targetExists: false
+          targetExists: false,
+          line, col
         });
       }
       continue;
@@ -702,11 +746,13 @@ function parseSuperscripts(xhtmlText) {
     const aHrefMatch = before.match(/<a\s+href\s*=\s*["']([^"']+)["'][^>]*>\s*$/i);
 
     if (!aHrefMatch) {
+      const { line, col } = getLineCol(xhtmlText, supIndex);
       superscriptHits.push({
         text: match[0],
         issue: 'Superscript not linked',
         href: null,
-        targetExists: false
+        targetExists: false,
+        line, col
       });
       continue;
     }
@@ -716,11 +762,13 @@ function parseSuperscripts(xhtmlText) {
     const targetExists = allIds.includes(targetId);
 
     if (!targetExists) {
+      const { line, col } = getLineCol(xhtmlText, supIndex);
       superscriptHits.push({
         text: match[0],
         issue: `Link target not found: ${href}`,
         href: href,
-        targetExists: false
+        targetExists: false,
+        line, col
       });
     }
   }
@@ -738,7 +786,8 @@ function parseDotAfterClose(xhtmlText) {
     const start = Math.max(0, match.index - 25);
     const end = Math.min(xhtmlText.length, dotAfterCloseRegex.lastIndex + 25);
     const snippet = xhtmlText.slice(start, end);
-    dotAfterCloseHits.push({ tagName, snippet });
+    const { line, col } = getLineCol(xhtmlText, match.index);
+    dotAfterCloseHits.push({ tagName, snippet, line, col });
   }
 
   return dotAfterCloseHits;
@@ -758,6 +807,12 @@ function parseTrailingSpace(xhtmlText) {
     : /[\s\S]/.test(afterHtml);
 }
 
+function parseTrailingSpaceLocation(xhtmlText) {
+  const htmlCloseMatch = xhtmlText.match(/<\/html\s*>/i);
+  if (!htmlCloseMatch) return { line: '', col: '' };
+  return getLineCol(xhtmlText, htmlCloseMatch.index + htmlCloseMatch[0].length);
+}
+
 function parseImageSrcs(xhtmlText) {
   const srcs = [];
   const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
@@ -768,6 +823,17 @@ function parseImageSrcs(xhtmlText) {
     srcs.push(filename);
   }
   return srcs;
+}
+
+function parseImageSrcLocations(xhtmlText) {
+  const locations = {};
+  const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = imgRegex.exec(xhtmlText)) !== null) {
+    const filename = match[1].split('/').pop();
+    if (!locations[filename]) locations[filename] = getLineCol(xhtmlText, match.index);
+  }
+  return locations;
 }
 
 function parseXhtmlTitle(xhtmlText) {
@@ -781,6 +847,7 @@ function parseStylesheetLink(xhtmlText) {
   if (!headMatch) return { found: false, actual: null };
 
   const headContent = headMatch[1];
+  const headOffset = headMatch.index + headMatch[0].indexOf(headContent);
   const linkRegex = /<link\s([^>]*?)\/>/gi;
   let m;
   const links = [];
@@ -790,12 +857,13 @@ function parseStylesheetLink(xhtmlText) {
     const rel   = (attrs.match(/rel\s*=\s*["']([^"']*)["']/i)  || [])[1] || '';
     const type  = (attrs.match(/type\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
     const href  = (attrs.match(/href\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
+    const { line, col } = getLineCol(xhtmlText, headOffset + m.index);
     if (rel === 'stylesheet') {
-      links.push({ rel, type, href, raw: m[0].trim() });
+      links.push({ rel, type, href, raw: m[0].trim(), line, col });
     }
   }
 
-  if (links.length === 0) return { found: false, actual: null };
+  if (links.length === 0) return { found: false, actual: null, line: '', col: '' };
 
   const expected = '../styles/stylesheet.css';
   const match = links.find(l =>
@@ -806,7 +874,9 @@ function parseStylesheetLink(xhtmlText) {
 
   return {
     found: !!match,
-    actual: links[0].raw
+    actual: links[0].raw,
+    line: links[0].line,
+    col: links[0].col
   };
 }
 
@@ -822,7 +892,10 @@ function parseAnchorTexts(xhtmlText) {
     const text = m[2].replace(/<[^>]+>/g, '').trim();
     const hrefM = attrs.match(/href\s*=\s*["']([^"']*)["']/i);
     const href = hrefM ? hrefM[1].trim() : '';
-    if (text) hits.push({ text, href });
+    if (text) {
+      const { line, col } = getLineCol(xhtmlText, m.index);
+      hits.push({ text, href, line, col });
+    }
   }
   return hits;
 }
@@ -845,7 +918,8 @@ function parseCrossFileAnchors(xhtmlText) {
     const href = hrefM[1].trim();
     if (!href || href.includes('#')) continue;
     const text = m[2].replace(/<[^>]+>/g, '').trim();
-    hits.push({ href, text });
+    const { line, col } = getLineCol(xhtmlText, m.index);
+    hits.push({ href, text, line, col });
   }
   return hits;
 }
@@ -866,6 +940,8 @@ function parseTableStructure(text) {
     tableIndex++;
     const tableContent = tableMatch[1];
     const label = `Table #${tableIndex}`;
+    const tableIssuesStart = issues.length;
+    const tableLoc = getLineCol(text, tableMatch.index);
 
     const theadOpenMatch = tableContent.match(/<thead[^>]*>/i);
     const theadCloseMatch = tableContent.match(/<\/thead>/i);
@@ -1018,6 +1094,11 @@ function parseTableStructure(text) {
     if (inTr) {
       issues.push({ type: '<tr> not closed', detail: `${label}: <tr> found but no </tr>` });
     }
+
+    for (let i = tableIssuesStart; i < issues.length; i++) {
+      issues[i].line = tableLoc.line;
+      issues[i].col = tableLoc.col;
+    }
   }
 
   return { issues };
@@ -1036,7 +1117,8 @@ function parseBoldSpace(text) {
     const content = match[1];
     const trimmedNewlines = content.replace(/^[\r\n]+/, '');
     if (/^[\u00A0 ]/.test(trimmedNewlines) || trimmedNewlines.startsWith('&nbsp;')) {
-      hits.push({ context: match[0] });
+      const { line, col } = getLineCol(text, match.index);
+      hits.push({ context: match[0], line, col });
     }
   }
 
@@ -1052,6 +1134,7 @@ function parseListParaCheck(text) {
   while ((listMatch = listRegex.exec(text)) !== null) {
     const listContent = listMatch[2];
     const tag = listMatch[1].toLowerCase();
+    const listContentOffset = listMatch.index + listMatch[0].indexOf(listContent);
 
     // CHECK 1: <p> directly inside <ol>/<ul> without a <li>
     // Correct:  <ol><li><p>text</p></li></ol>
@@ -1059,9 +1142,11 @@ function parseListParaCheck(text) {
     const firstP = listContent.search(/<p[\s>]/i);
     const firstLi = listContent.search(/<li[\s>]/i);
     if (firstP !== -1 && (firstLi === -1 || firstP < firstLi)) {
+      const { line, col } = getLineCol(text, listMatch.index);
       hits.push({
         type: '<p> directly inside <' + tag + '> without <li>',
-        context: listMatch[0].slice(0, 120)
+        context: listMatch[0].slice(0, 120),
+        line, col
       });
     }
 
@@ -1070,9 +1155,11 @@ function parseListParaCheck(text) {
     // Wrong:    <ol><ul><li><p>text</p></li></ul></ol>
     const nestedListPos = listContent.search(/<(ol|ul)[\s>]/i);
     if (nestedListPos !== -1 && (firstLi === -1 || nestedListPos < firstLi)) {
+      const { line, col } = getLineCol(text, listMatch.index);
       hits.push({
         type: 'Nested <ol>/<ul> without <li> wrapper',
-        context: listMatch[0].slice(0, 120)
+        context: listMatch[0].slice(0, 120),
+        line, col
       });
     }
 
@@ -1082,9 +1169,11 @@ function parseListParaCheck(text) {
     const emptyLiRegex = /<li[^>]*>\s*<\/li>/gi;
     let emptyLiMatch;
     while ((emptyLiMatch = emptyLiRegex.exec(listContent)) !== null) {
+      const { line, col } = getLineCol(text, listContentOffset + emptyLiMatch.index);
       hits.push({
         type: 'Empty <li>',
-        context: emptyLiMatch[0]
+        context: emptyLiMatch[0],
+        line, col
       });
     }
 
@@ -1094,9 +1183,11 @@ function parseListParaCheck(text) {
     const emptyPInLiRegex = /<li[^>]*>[\s\S]*?<p[^>]*>\s*<\/p>[\s\S]*?<\/li>/gi;
     let emptyPMatch;
     while ((emptyPMatch = emptyPInLiRegex.exec(listContent)) !== null) {
+      const { line, col } = getLineCol(text, listContentOffset + emptyPMatch.index);
       hits.push({
         type: 'Empty <p> inside <li>',
-        context: emptyPMatch[0].slice(0, 120)
+        context: emptyPMatch[0].slice(0, 120),
+        line, col
       });
     }
 
@@ -1108,9 +1199,11 @@ function parseListParaCheck(text) {
     while ((liOpen = liOpenRegex.exec(listContent)) !== null) {
       const afterLi = listContent.slice(liOpen.index + liOpen[0].length);
       if (!/^[\s\S]*?<\/li>/i.test(afterLi)) {
+        const { line, col } = getLineCol(text, listContentOffset + liOpen.index);
         hits.push({
           type: 'Unclosed <li>',
-          context: liOpen[0]
+          context: liOpen[0],
+          line, col
         });
       }
     }
@@ -1123,9 +1216,11 @@ function parseListParaCheck(text) {
   const orphanLiRegex = /<li[\s>]/gi;
   let orphan;
   while ((orphan = orphanLiRegex.exec(strippedText)) !== null) {
+    const { line, col } = getLineCol(strippedText, orphan.index);
     hits.push({
       type: 'Orphan <li> outside any list',
-      context: strippedText.slice(orphan.index, orphan.index + 80)
+      context: strippedText.slice(orphan.index, orphan.index + 80),
+      line, col
     });
   }
 
@@ -1135,6 +1230,8 @@ function parseListParaCheck(text) {
 function parseFigureAnchors(xhtmlText) {
   const ids = [];
   const hrefs = [];
+  const idLocations = {};
+  const hrefLocations = {};
 
   const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
   let m;
@@ -1142,13 +1239,16 @@ function parseFigureAnchors(xhtmlText) {
     const id = m[1].trim();
     if (!id.toLowerCase().startsWith('pagebreak')) {
       ids.push(id);
+      idLocations[id] = getLineCol(xhtmlText, m.index);
     }
   }
 
   const hrefRegex = /<a\s[^>]*href\s*=\s*["']#([^"']+)["'][^>]*>/gi;
   while ((m = hrefRegex.exec(xhtmlText)) !== null) {
-    hrefs.push(m[1].trim());
+    const href = m[1].trim();
+    hrefs.push(href);
+    hrefLocations[href] = getLineCol(xhtmlText, m.index);
   }
 
-  return { ids, hrefs };
+  return { ids, hrefs, idLocations, hrefLocations };
 }

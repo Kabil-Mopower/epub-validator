@@ -15,6 +15,17 @@ let lastParsedFiles = []; // set by app.js runValidation(); feeds the Tag → Cl
  * Renders the summary card (total / passed / failed counts,
  * plus a per-matter-type breakdown).
  */
+function lineColBox(line, col) {
+  if (!line && !col) return '';
+  return `
+    <span class="line-col-box">
+      <span class="lc-header">Line</span>
+      <span class="lc-header">Col</span>
+      <span class="lc-value">${line || '—'}</span>
+      <span class="lc-value">${col || '—'}</span>
+    </span>`;
+}
+
 function ensureWarningSummaryCard() {
   let warningItem = document.getElementById("summaryWarningItem");
   if (warningItem) return warningItem;
@@ -193,17 +204,20 @@ function buildRuleTable(result) {
 
     if (r.name === 'stylesheetLinkCheck') {
       if (r.pass) {
-        tableBody = `<p style="color:var(--pass);font-weight:600;padding:0.75rem 1.2rem;">&#10003; Correct stylesheet link found.</p>`;
+        tableBody = `<div style="display:flex;align-items:center;gap:10px;padding:0.75rem 1.2rem;"><p style="color:var(--pass);font-weight:600;margin:0;">&#10003; Correct stylesheet link found.</p>${lineColBox(r.line, r.col)}</div>`;
       } else {
         tableBody = `
-          <div style="padding:0.75rem 1.2rem;">
-            <p style="color:var(--fail);font-weight:600;margin-bottom:0.5rem;">&#10007; ${escapeHtml(r.reason)}</p>
-            <p style="font-size:0.85rem;color:var(--text-muted);">Expected:
-              <code style="color:var(--accent);">&lt;link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/&gt;</code>
-            </p>
-            ${r.actual ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Found:
-              <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
-            </p>` : ''}
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:0.75rem 1.2rem;">
+            <div>
+              <p style="color:var(--fail);font-weight:600;margin-bottom:0.5rem;">&#10007; ${escapeHtml(r.reason)}</p>
+              <p style="font-size:0.85rem;color:var(--text-muted);">Expected:
+                <code style="color:var(--accent);">&lt;link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/&gt;</code>
+              </p>
+              ${r.actual ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Found:
+                <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
+              </p>` : ''}
+            </div>
+            ${lineColBox(r.line, r.col)}
           </div>`;
       }
     } else if (r.name === 'headingStyles' && r.headingRows && r.headingRows.length > 0) {
@@ -214,6 +228,7 @@ function buildRuleTable(result) {
         tableBody = `<p class="rule-na-text">&mdash; No matching headings found</p>`;
       } else {
       tableBody = `
+      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -241,10 +256,15 @@ function buildRuleTable(result) {
               </tr>
             `).join('')}
           </tbody>
-        </table>`;
+        </table>
+        <div class="location-sidebar">
+          ${visibleRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+        </div>
+      </div>`;
       }
     } else if (r.name === 'footnoteClasses' && r.footnoteRows && r.footnoteRows.length > 0) {
       tableBody = `
+      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -268,7 +288,11 @@ function buildRuleTable(result) {
               </tr>
             `).join('')}
           </tbody>
-        </table>`;
+        </table>
+        <div class="location-sidebar">
+          ${r.footnoteRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+        </div>
+      </div>`;
     } else if (
       (r.name === 'h1AuthorH2' || r.name === 'h1AuthorP' || r.name === 'h1H2' || r.name === 'h1P') &&
       r.h1Rows && r.h1Rows.length > 0
@@ -301,6 +325,7 @@ function buildRuleTable(result) {
       };
 
       tableBody = `
+      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -324,9 +349,14 @@ function buildRuleTable(result) {
               </tr>
             `).join('')).join('')}
           </tbody>
-        </table>`;
+        </table>
+        <div class="location-sidebar">
+          ${r.h1Rows.map(h => subRowsFor(h).map((sub, i) => `<div class="location-row">${i === 0 ? lineColBox(h.line, h.col) : ''}</div>`).join('')).join('')}
+        </div>
+      </div>`;
     } else if (r.name === 'copyrightFontSize' && r.copyrightRows && r.copyrightRows.length > 0) {
       tableBody = `
+      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -350,13 +380,18 @@ function buildRuleTable(result) {
               </tr>
             `).join('')}
           </tbody>
-        </table>`;
+        </table>
+        <div class="location-sidebar">
+          ${r.copyrightRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+        </div>
+      </div>`;
     } else if (r.name === 'doubleSpace') {
       if (r.pass) {
         tableBody = `<p class="val-pass">No double spaces found</p>`;
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.doubleSpaceRows.length} double space(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -374,7 +409,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.doubleSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'tabSpace') {
       if (r.pass) {
@@ -382,6 +421,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tabSpaceRows.length} tab space(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -399,7 +439,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.tabSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'capitalAfterP') {
       if (r.pass) {
@@ -407,6 +451,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.capitalRows.length} &lt;p&gt; tag(s) start with lowercase</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -428,7 +473,11 @@ function buildRuleTable(result) {
               `;
               }).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.capitalRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'endPunctuation') {
       if (r.pass) {
@@ -436,6 +485,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.endPuncRows.length} &lt;p&gt; tag(s) missing end punctuation</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -459,7 +509,11 @@ function buildRuleTable(result) {
               `;
               }).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.endPuncRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'ampersand') {
       if (r.pass) {
@@ -467,6 +521,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.ampersandRows.length} tag(s) contain &amp;&amp;</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -484,7 +539,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.ampersandRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'hyphenSpace') {
       if (r.pass) {
@@ -492,6 +551,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.hyphenSpaceRows.length} tag(s) contain hyphen followed by space</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -509,7 +569,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.hyphenSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'numberHyphen') {
       const isWarning = r.warning === true || (r.numberHyphenRows && r.numberHyphenRows.length > 0);
@@ -521,6 +585,7 @@ function buildRuleTable(result) {
         tableBody = `
           <p class="rule-warn-text">${r.numberHyphenRows.length} tag(s) contain number-hyphen-number pattern</p>
           <p class="rule-warn-text">Consider using en dash (&ndash;) instead of hyphen (-)</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -547,17 +612,27 @@ function buildRuleTable(result) {
               `;
               }).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.numberHyphenRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'trailingSpace') {
       if (r.pass) {
         tableBody = `<p class="val-pass">No trailing space after &lt;/html&gt;</p>`;
       } else {
-        const charCount = (r.trailingSpaceRows && r.trailingSpaceRows[0] && r.trailingSpaceRows[0].charCount) || 0;
+        const trailingRow = (r.trailingSpaceRows && r.trailingSpaceRows[0]) || {};
+        const charCount = trailingRow.charCount || 0;
         tableBody = `
-          <p class="rule-fail-text">${charCount} character(s) found after &lt;/html&gt;</p>
-          <p class="rule-fail-text">Extra whitespace or line breaks detected after closing &lt;/html&gt; tag</p>
-          <p class="rule-fail-text">Characters found: ${charCount}</p>`;
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div>
+              <p class="rule-fail-text">${charCount} character(s) found after &lt;/html&gt;</p>
+              <p class="rule-fail-text">Extra whitespace or line breaks detected after closing &lt;/html&gt; tag</p>
+              <p class="rule-fail-text">Characters found: ${charCount}</p>
+            </div>
+            ${lineColBox(trailingRow.line, trailingRow.col)}
+          </div>`;
       }
     } else if (r.name === 'spaceAfterOpen') {
       if (r.pass) {
@@ -565,6 +640,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.spaceAfterOpenRows.length} tag(s) have space after opening tag</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -589,7 +665,11 @@ function buildRuleTable(result) {
               `;
               }).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.spaceAfterOpenRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'spaceBeforeClose') {
       if (r.pass) {
@@ -597,6 +677,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.spaceBeforeCloseRows.length} tag(s) have space before closing tag</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -621,7 +702,11 @@ function buildRuleTable(result) {
               `;
               }).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.spaceBeforeCloseRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'dotAfterClose') {
       if (r.pass) {
@@ -629,6 +714,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.dotAfterCloseRows.length} closing tag(s) followed by a dot</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -644,7 +730,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.dotAfterCloseRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'superscriptLink') {
       if (r.pass) {
@@ -652,6 +742,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.superscriptRows.length} superscript(s) have link issues</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -671,7 +762,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.superscriptRows.map(h => `<div class="location-row">${lineColBox(h.line, h.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'pagebreakCheck') {
       const pagebreakOrderHtml = buildPagebreakOrderDisplay(r);
@@ -680,6 +775,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">Pagebreak series incorrect</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -717,6 +813,10 @@ function buildRuleTable(result) {
               }).join('')}
             </tbody>
           </table>
+          <div class="location-sidebar">
+            ${r.pagebreakRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>
           ${pagebreakOrderHtml}`;
       }
     } else if (r.name === 'tableImage') {
@@ -725,6 +825,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tableImageRows.filter(row => !row.pass).length} table image block(s) have issues</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -746,7 +847,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.tableImageRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'referenceCheck') {
       if (r.pass) {
@@ -754,6 +859,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.referenceRows.length} issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -771,7 +877,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.referenceRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'cssClassCheck') {
       if (r.pass) {
@@ -779,6 +889,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.cssClassRows.length} class(es) not found in stylesheet</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -798,7 +909,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.cssClassRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'figureImage') {
       if (r.pass) {
@@ -806,6 +921,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.figureImageRows.filter(row => !row.pass).length} figure block(s) have issues</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -827,7 +943,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.figureImageRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'crossRefLink') {
       if (r.pass) {
@@ -835,6 +955,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.crossRefRows.length} cross reference(s) not linked</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -850,7 +971,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.crossRefRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'figureAnchorCheck') {
       if (r.pass) {
@@ -858,6 +983,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.figureAnchorRows.length} anchor issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -875,7 +1001,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.figureAnchorRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'imageNameCheck') {
       if (r.pass) {
@@ -883,6 +1013,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.imageNameRows.filter(row => !row.pass).length} image name issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -904,7 +1035,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.imageNameRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'unwantedTag') {
       if (r.pass) {
@@ -917,6 +1052,7 @@ function buildRuleTable(result) {
         };
         tableBody = `
           <p class="rule-fail-text">${r.unwantedTagRows.length} issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -938,7 +1074,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.unwantedTagRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'pagebreakChecker') {
       if (r.notApplicable) {
@@ -984,9 +1124,12 @@ function buildRuleTable(result) {
         tableBody = `<p class="rule-na-text">No anchor texts found.</p>`;
       } else {
         const items = r.anchorTexts.map((a, i) => `
-          <li style="margin-bottom:10px;">
-            <span style="font-weight:700;font-size:1rem;">${i + 1}. ${escapeHtml(a.text)}</span>
-            <span style="color:var(--accent);margin-left:12px;font-family:monospace;font-size:0.95rem;">${escapeHtml(a.href)}</span>
+          <li style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span>
+              <span style="font-weight:700;font-size:1rem;">${i + 1}. ${escapeHtml(a.text)}</span>
+              <span style="color:var(--accent);margin-left:12px;font-family:monospace;font-size:0.95rem;">${escapeHtml(a.href)}</span>
+            </span>
+            ${lineColBox(a.line, a.col)}
           </li>`).join('');
         tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
       }
@@ -996,6 +1139,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.crossFileHrefRows.filter(row => !row.pass).length} cross-file href(s) do not end with .xhtml</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1015,13 +1159,18 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.crossFileHrefRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'crossFileAnchorDisplay') {
       if (!r.crossFileAnchors || r.crossFileAnchors.length === 0) {
         tableBody = `<p class="rule-na-text">No cross-file .xhtml anchors found.</p>`;
       } else {
         tableBody = `
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1037,7 +1186,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.crossFileAnchors.map(a => `<div class="location-row">${lineColBox(a.line, a.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'tableStructureCheck') {
       if (r.pass) {
@@ -1045,6 +1198,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tableStructureRows.length} table structure issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1060,7 +1214,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.tableStructureRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'boldSpaceCheck') {
       if (r.pass) {
@@ -1068,6 +1226,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.boldSpaceRows.length} <b> tag(s) start with a space</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1081,7 +1240,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.boldSpaceRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'listParaCheck') {
       if (r.notApplicable) {
@@ -1091,6 +1254,7 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.listParaRows.length} list structure issue(s) found</p>
+          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr><th>Issue</th><th>Context</th></tr>
@@ -1103,7 +1267,11 @@ function buildRuleTable(result) {
                 </tr>
               `).join('')}
             </tbody>
-          </table>`;
+          </table>
+          <div class="location-sidebar">
+            ${r.listParaRows.map(row => `<div class="location-row">${lineColBox(row.line, row.col)}</div>`).join('')}
+          </div>
+          </div>`;
       }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
@@ -1145,6 +1313,7 @@ function buildRuleTable(result) {
     } else {
       // Single row rule
       tableBody = `
+      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -1175,7 +1344,11 @@ function buildRuleTable(result) {
               <td class="${r.pass ? '' : 'rule-fail-text'}">${r.reason ? escapeHtml(r.reason) : '—'}</td>
             </tr>
           </tbody>
-        </table>`;
+        </table>
+        <div class="location-sidebar">
+          <div class="location-row">${lineColBox(r.line, r.col)}</div>
+        </div>
+      </div>`;
     }
 
     const headerIsWarning = r.name === 'numberHyphen'
