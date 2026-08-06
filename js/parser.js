@@ -912,10 +912,12 @@ function parseCrossFileAnchors(xhtmlText) {
     const hrefM = attrs.match(/href\s*=\s*["']([^"']*)["']/i);
     if (!hrefM) continue;
     const href = hrefM[1].trim();
-    if (!href || href.includes('#')) continue;
+    if (!href) continue;
+    const missingHash = !href.includes('#') && /\.xhtml/i.test(href);
+    if (href.includes('#')) continue;
     const text = m[2].replace(/<[^>]+>/g, '').trim();
     const { line } = getLineCol(xhtmlText, m.index);
-    hits.push({ href, text, line });
+    hits.push({ href, text, line, missingHash });
   }
   return hits;
 }

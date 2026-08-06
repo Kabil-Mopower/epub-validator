@@ -2226,13 +2226,21 @@ function ruleCrossFileHrefCheck(fileData) {
   }
 
   const rows = anchors.map(a => {
-    const pass = /\.xhtml$/i.test(a.href);
+    const endsWithXhtml = /\.xhtml$/i.test(a.href);
+    const pass = endsWithXhtml && !a.missingHash;
+    let reason = '';
+    if (!pass) {
+      reason = a.missingHash
+        ? `Missing '#' in href — should be "${a.href.replace('.xhtml', '.xhtml#')}" instead of "${a.href}"`
+        : `href "${a.href}" does not end with .xhtml`;
+    }
     return {
       href: a.href,
       text: a.text,
       pass,
+      missingHash: !!a.missingHash,
       line: a.line || '',
-      reason: pass ? '' : `href "${a.href}" does not end with .xhtml`
+      reason
     };
   });
 
@@ -2244,7 +2252,7 @@ function ruleCrossFileHrefCheck(fileData) {
     pass: overallPass,
     notApplicable: false,
     crossFileHrefRows: rows,
-    reason: overallPass ? '' : `${rows.filter(r => !r.pass).length} cross-file href(s) do not end with .xhtml`
+    reason: overallPass ? '' : `${rows.filter(r => !r.pass).length} cross-file href(s) failed`
   };
 }
 ruleCrossFileHrefCheck.ruleName = 'crossFileHrefCheck';

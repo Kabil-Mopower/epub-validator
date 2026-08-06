@@ -1136,7 +1136,7 @@ function buildRuleTable(result) {
         tableBody = `<p class="val-pass">All cross-file hrefs end with .xhtml</p>`;
       } else {
         tableBody = `
-          <p class="rule-fail-text">${r.crossFileHrefRows.filter(row => !row.pass).length} cross-file href(s) do not end with .xhtml</p>
+          <p class="rule-fail-text">${r.crossFileHrefRows.filter(row => !row.pass).length} cross-file href(s) failed</p>
           <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
