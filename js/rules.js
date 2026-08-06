@@ -262,9 +262,9 @@ function ruleHeadingStyles(fileData, cssRules) {
       continue;
     }
 
-    // Only check if class exactly matches tag name
+    // Check if any class starts with the tag name (e.g. h2, h2a, h21)
     const classes = (h.className || '').split(/\s+/).filter(Boolean);
-    const hasMatchingClass = classes.includes(h.tagName);
+    const hasMatchingClass = classes.some(c => c.startsWith(h.tagName));
 
     if (!hasMatchingClass) {
       headingRows.push({
@@ -279,7 +279,7 @@ function ruleHeadingStyles(fileData, cssRules) {
         fontSizePass: true,
         pass: true,
         notApplicable: true,
-        reason: `Class "${h.className}" does not match tag name — skipped`
+        reason: `Class "${h.className}" does not start with tag name "${h.tagName}" — skipped`
       });
       continue;
     }
