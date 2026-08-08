@@ -287,7 +287,7 @@ document.getElementById('continueToReportBtn').addEventListener('click', () => {
 
 const revalidateBtn = document.getElementById('revalidateBtn');
 
-revalidateBtn.addEventListener('click', async () => {
+if (revalidateBtn) revalidateBtn.addEventListener('click', async () => {
   if (!selectedFileList) return;
 
   revalidateBtn.disabled = true;
@@ -470,6 +470,8 @@ async function runValidation(fileList) {
     const crossFileAnchors = parseCrossFileAnchors(xhtmlText);
     const stylesheetLink = parseStylesheetLink(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
+    const malformedAttrHits = parseMalformedAttr(xhtmlText);
+    const uppercaseTagAttrHits = parseUppercaseTagAttr(xhtmlText);
     const tableStructure = parseTableStructure(xhtmlText);
     const boldSpaceHits = parseBoldSpace(xhtmlText);
     const listParaHits = parseListParaCheck(xhtmlText);
@@ -521,6 +523,8 @@ async function runValidation(fileList) {
       emptyTags,
       orphanClose,
       unclosedTags,
+      malformedAttrHits,
+      uppercaseTagAttrHits,
       tableStructure,
       boldSpaceHits,
       listParaHits,

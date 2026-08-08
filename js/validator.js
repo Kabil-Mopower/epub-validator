@@ -87,6 +87,8 @@ function validateFile(fileData) {
       tableStructureRows: result.tableStructureRows || [],
       boldSpaceRows: result.boldSpaceRows || [],
       listParaRows: result.listParaRows || [],
+      malformedAttrRows: result.malformedAttrRows || [],
+      uppercaseTagAttrRows: result.uppercaseTagAttrRows || [],
       reason: result.reason || ""
     });
   }

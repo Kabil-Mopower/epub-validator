@@ -37,6 +37,8 @@
     "crossFileAnchorDisplay": true,
     "tableStructureCheck": true,
     "boldSpaceCheck": true,
-    "listParaCheck": true
+    "listParaCheck": true,
+    "malformedAttrCheck": true,
+    "uppercaseTagAttrCheck": true
   }
 }

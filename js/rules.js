@@ -1361,6 +1361,19 @@ function rulePagebreakCheck(fileData, cssRules) {
   }
 
   const originalOrder = fileData.pagebreakOriginalOrder || [];
+
+  // Check for duplicates
+  const seen = new Set();
+  const duplicates = [];
+  for (const v of originalOrder) {
+    const key = String(v);
+    if (seen.has(key)) {
+      if (!duplicates.includes(key)) duplicates.push(key);
+    } else {
+      seen.add(key);
+    }
+  }
+
   const mode = fileData.pagebreakMode || 'numeric';
 
   if (mode === 'mixed') {
@@ -1465,6 +1478,17 @@ function rulePagebreakCheck(fileData, cssRules) {
     });
   }
 
+  if (duplicates.length > 0) {
+    overallPass = false;
+    rows.unshift({
+      check: 'Duplicate Pagebreaks',
+      expected: 'All pagebreak ids must be unique',
+      found: duplicates.join(', '),
+      pass: false,
+      reason: `Duplicate pagebreak id(s) found: pagebreak_${duplicates.join(', pagebreak_')}`
+    });
+  }
+
   const modeLabel = mode === 'roman' ? 'Roman numeral pagebreaks' : 'Numeric pagebreaks';
 
   return {
@@ -1502,6 +1526,19 @@ function rulePagebreakCheckFullEpub(fileData, expected, bucketFiles, shortName) 
   }
 
   const originalOrder = entries.map(e => e.value);
+
+  // Check for duplicates
+  const seen = new Set();
+  const duplicates = [];
+  for (const v of originalOrder) {
+    const key = String(v);
+    if (seen.has(key)) {
+      if (!duplicates.includes(key)) duplicates.push(key);
+    } else {
+      seen.add(key);
+    }
+  }
+
   const orderInts = entries.map(e =>
     e.mode === 'roman' ? romanToInt(e.value) : (typeof e.value === 'number' ? e.value : parseInt(e.value, 10))
   );
@@ -1583,6 +1620,17 @@ function rulePagebreakCheckFullEpub(fileData, expected, bucketFiles, shortName) 
       found: data.originalOrder.join(', ') || 'none',
       pass: true,
       reason: ''
+    });
+  }
+
+  if (duplicates.length > 0) {
+    overallPass = false;
+    rows.unshift({
+      check: 'Duplicate Pagebreaks',
+      expected: 'All pagebreak ids must be unique',
+      found: duplicates.join(', '),
+      pass: false,
+      reason: `Duplicate pagebreak id(s) found: pagebreak_${duplicates.join(', pagebreak_')}`
     });
   }
 
@@ -2501,6 +2549,54 @@ function ruleListParaCheck(fileData) {
 }
 ruleListParaCheck.ruleName = 'listParaCheck';
 
+function ruleMalformedAttrCheck(fileData) {
+  const hits = fileData.malformedAttrHits;
+
+  if (hits === undefined) {
+    return {
+      name: 'malformedAttrCheck', label: 'Malformed Attribute Check',
+      pass: true, notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      malformedAttrRows: [], reason: ''
+    };
+  }
+
+  if (hits.length === 0) {
+    return {
+      name: 'malformedAttrCheck', label: 'Malformed Attribute Check',
+      pass: true, notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      malformedAttrRows: [], reason: ''
+    };
+  }
+
+  return {
+    name: 'malformedAttrCheck', label: 'Malformed Attribute Check',
+    pass: false, notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    malformedAttrRows: hits.map(h => ({ tagName: h.tagName, snippet: h.snippet, line: h.line || '' })),
+    reason: `${hits.length} malformed class attribute(s) found`
+  };
+}
+ruleMalformedAttrCheck.ruleName = 'malformedAttrCheck';
+
+function ruleUppercaseTagAttrCheck(fileData) {
+  const hits = fileData.uppercaseTagAttrHits;
+  if (hits === undefined) return { name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check', pass: true, notApplicable: true, firstTag: '', className: '', marginTopValue: '', marginBottomValue: '', fontSizeValue: '', uppercaseTagAttrRows: [], reason: '' };
+  if (hits.length === 0) return { name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check', pass: true, notApplicable: false, firstTag: '', className: '', marginTopValue: '', marginBottomValue: '', fontSizeValue: '', uppercaseTagAttrRows: [], reason: '' };
+  return {
+    name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check',
+    pass: false, notApplicable: false,
+    firstTag: '', className: '', marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    uppercaseTagAttrRows: hits.map(h => ({ tagName: h.tagName, snippet: h.snippet, issues: h.issues.join('; '), line: h.line || '' })),
+    reason: `${hits.length} tag(s) have uppercase tag name or attribute name`
+  };
+}
+ruleUppercaseTagAttrCheck.ruleName = 'uppercaseTagAttrCheck';
+
 const RULES = [
   ruleFirstTagMarginTop,
   ruleFmtitleMargins,
@@ -2538,7 +2634,9 @@ const RULES = [
   ruleCrossFileAnchorDisplay,
   ruleTableStructureCheck,
   ruleBoldSpaceCheck,
-  ruleListParaCheck
+  ruleListParaCheck,
+  ruleMalformedAttrCheck,
+  ruleUppercaseTagAttrCheck
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);

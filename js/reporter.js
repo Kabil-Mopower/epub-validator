@@ -202,20 +202,18 @@ function buildRuleTable(result) {
 
     if (r.name === 'stylesheetLinkCheck') {
       if (r.pass) {
-        tableBody = `<div style="display:flex;align-items:center;gap:10px;padding:0.75rem 1.2rem;"><p style="color:var(--pass);font-weight:600;margin:0;">&#10003; Correct stylesheet link found.</p>${lineColBox(r.line)}</div>`;
+        tableBody = `<p class="val-pass">&#10003; Correct stylesheet link found. &nbsp; Line: ${r.line || '—'}</p>`;
       } else {
         tableBody = `
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:0.75rem 1.2rem;">
-            <div>
-              <p style="color:var(--fail);font-weight:600;margin-bottom:0.5rem;">&#10007; ${escapeHtml(r.reason)}</p>
-              <p style="font-size:0.85rem;color:var(--text-muted);">Expected:
-                <code style="color:var(--accent);">&lt;link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/&gt;</code>
-              </p>
-              ${r.actual ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Found:
-                <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
-              </p>` : ''}
-            </div>
-            ${lineColBox(r.line)}
+          <div style="padding:0.75rem 1.2rem;">
+            <p style="color:var(--fail);font-weight:600;margin-bottom:0.5rem;">&#10007; ${escapeHtml(r.reason)}</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);">Expected:
+              <code style="color:var(--accent);">&lt;link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/&gt;</code>
+            </p>
+            ${r.actual ? `<p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">Found:
+              <code style="color:var(--fail);">${escapeHtml(r.actual)}</code>
+            </p>` : ''}
+            <p style="font-size:0.85rem;color:var(--text-muted);">Line: ${r.line || '—'}</p>
           </div>`;
       }
     } else if (r.name === 'headingStyles' && r.headingRows && r.headingRows.length > 0) {
@@ -226,7 +224,6 @@ function buildRuleTable(result) {
         tableBody = `<p class="rule-na-text">&mdash; No matching headings found</p>`;
       } else {
       tableBody = `
-      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -238,6 +235,7 @@ function buildRuleTable(result) {
               <th>Font-Size</th>
               <th>Status</th>
               <th>Reason</th>
+              <th>Line</th>
             </tr>
           </thead>
           <tbody>
@@ -251,18 +249,14 @@ function buildRuleTable(result) {
                 <td class="${h.fontSizePass ? 'val-pass' : 'val-fail'}">${escapeHtml(h.fontSize)}</td>
                 <td><span class="status-badge ${h.pass ? 'status-pass' : 'status-fail'}">${h.pass ? 'PASS' : 'FAIL'}</span></td>
                 <td class="rule-fail-text">${escapeHtml(h.reason)}</td>
+                <td>${h.line || '&mdash;'}</td>
               </tr>
             `).join('')}
           </tbody>
-        </table>
-        <div class="location-sidebar">
-          ${visibleRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-        </div>
-      </div>`;
+        </table>`;
       }
     } else if (r.name === 'footnoteClasses' && r.footnoteRows && r.footnoteRows.length > 0) {
       tableBody = `
-      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -272,6 +266,7 @@ function buildRuleTable(result) {
               <th>Font-Size</th>
               <th>Status</th>
               <th>Reason</th>
+              <th>Line</th>
             </tr>
           </thead>
           <tbody>
@@ -283,14 +278,11 @@ function buildRuleTable(result) {
                 <td class="${h.fontSizePass ? 'val-pass' : 'val-fail'}">${escapeHtml(h.fontSize)}</td>
                 <td><span class="status-badge ${h.warning ? 'status-warn' : h.pass ? 'status-pass' : 'status-fail'}">${h.warning ? 'WARN' : h.pass ? 'PASS' : 'FAIL'}</span></td>
                 <td class="${h.warning ? 'rule-warn-text' : 'rule-fail-text'}">${escapeHtml(h.reason)}</td>
+                <td>${h.line || '&mdash;'}</td>
               </tr>
             `).join('')}
           </tbody>
-        </table>
-        <div class="location-sidebar">
-          ${r.footnoteRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-        </div>
-      </div>`;
+        </table>`;
     } else if (
       (r.name === 'h1AuthorH2' || r.name === 'h1AuthorP' || r.name === 'h1H2' || r.name === 'h1P') &&
       r.h1Rows && r.h1Rows.length > 0
@@ -323,7 +315,6 @@ function buildRuleTable(result) {
       };
 
       tableBody = `
-      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -333,6 +324,7 @@ function buildRuleTable(result) {
               <th>Found</th>
               <th>Status</th>
               <th>Reason</th>
+              <th>Line</th>
             </tr>
           </thead>
           <tbody>
@@ -344,17 +336,13 @@ function buildRuleTable(result) {
                 <td>${escapeHtml(sub.found)}</td>
                 <td>${i === 0 ? `<span class="status-badge ${h.pass ? 'status-pass' : 'status-fail'}">${h.pass ? 'PASS' : 'FAIL'}</span>` : ''}</td>
                 <td class="${h.pass ? '' : 'rule-fail-text'}">${i === 0 ? (escapeHtml(h.reason) || '—') : ''}</td>
+                <td>${i === 0 ? (h.line || '—') : ''}</td>
               </tr>
             `).join('')).join('')}
           </tbody>
-        </table>
-        <div class="location-sidebar">
-          ${r.h1Rows.map(h => subRowsFor(h).map((sub, i) => `<div class="location-row">${i === 0 ? lineColBox(h.line) : ''}</div>`).join('')).join('')}
-        </div>
-      </div>`;
+        </table>`;
     } else if (r.name === 'copyrightFontSize' && r.copyrightRows && r.copyrightRows.length > 0) {
       tableBody = `
-      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -364,6 +352,7 @@ function buildRuleTable(result) {
               <th>Font-Size</th>
               <th>Status</th>
               <th>Reason</th>
+              <th>Line</th>
             </tr>
           </thead>
           <tbody>
@@ -375,27 +364,24 @@ function buildRuleTable(result) {
                 <td class="${h.fontSizePass ? 'val-pass' : 'val-fail'}">${escapeHtml(h.fontSize)}</td>
                 <td><span class="status-badge ${h.pass ? 'status-pass' : 'status-fail'}">${h.pass ? 'PASS' : 'FAIL'}</span></td>
                 <td class="${h.pass ? '' : 'rule-fail-text'}">${escapeHtml(h.reason) || '—'}</td>
+                <td>${h.line || '&mdash;'}</td>
               </tr>
             `).join('')}
           </tbody>
-        </table>
-        <div class="location-sidebar">
-          ${r.copyrightRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-        </div>
-      </div>`;
+        </table>`;
     } else if (r.name === 'doubleSpace') {
       if (r.pass) {
         tableBody = `<p class="val-pass">No double spaces found</p>`;
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.doubleSpaceRows.length} double space(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -404,14 +390,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${escapeHtml(h.text).replace(/  /g, '<mark style="background:red;color:white;">&nbsp;&nbsp;</mark>')}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.doubleSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'tabSpace') {
       if (r.pass) {
@@ -419,13 +402,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tabSpaceRows.length} tab space(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -434,14 +417,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${escapeHtml(h.text).replace(/ {3,}/g, '<mark style="background:orange;color:white;">&nbsp;&nbsp;&nbsp;</mark>')}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.tabSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'capitalAfterP') {
       if (r.pass) {
@@ -449,13 +429,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.capitalRows.length} &lt;p&gt; tag(s) start with lowercase</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -467,15 +447,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${highlighted}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.capitalRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'endPunctuation') {
       if (r.pass) {
@@ -483,13 +460,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.endPuncRows.length} &lt;p&gt; tag(s) missing end punctuation</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -503,15 +480,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${highlighted}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.endPuncRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'ampersand') {
       if (r.pass) {
@@ -519,13 +493,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.ampersandRows.length} tag(s) contain &amp;&amp;</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -534,14 +508,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${escapeHtml(h.text).replace(/&amp;&amp;/g, '<mark style="background:red;color:white;">&amp;&amp;</mark>')}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.ampersandRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'hyphenSpace') {
       if (r.pass) {
@@ -549,13 +520,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.hyphenSpaceRows.length} tag(s) contain hyphen followed by space</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Content</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -564,14 +535,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${escapeHtml(h.text).replace(/- /g, '<mark style="background:red;color:white;">- </mark>')}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.hyphenSpaceRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'numberHyphen') {
       const isWarning = r.warning === true || (r.numberHyphenRows && r.numberHyphenRows.length > 0);
@@ -583,7 +551,6 @@ function buildRuleTable(result) {
         tableBody = `
           <p class="rule-warn-text">${r.numberHyphenRows.length} tag(s) contain number-hyphen-number pattern</p>
           <p class="rule-warn-text">Consider using en dash (&ndash;) instead of hyphen (-)</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -591,6 +558,7 @@ function buildRuleTable(result) {
                 <th>Class</th>
                 <th>Text Content</th>
                 <th>Matches Found</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -606,15 +574,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.className)}</td>
                   <td>${highlighted}</td>
                   <td>${escapeHtml((h.matches || []).join(', '))}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.numberHyphenRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'trailingSpace') {
       if (r.pass) {
@@ -623,14 +588,13 @@ function buildRuleTable(result) {
         const trailingRow = (r.trailingSpaceRows && r.trailingSpaceRows[0]) || {};
         const charCount = trailingRow.charCount || 0;
         tableBody = `
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <div>
-              <p class="rule-fail-text">${charCount} character(s) found after &lt;/html&gt;</p>
-              <p class="rule-fail-text">Extra whitespace or line breaks detected after closing &lt;/html&gt; tag</p>
-              <p class="rule-fail-text">Characters found: ${charCount}</p>
-            </div>
-            ${lineColBox(trailingRow.line)}
-          </div>`;
+          <table class="rule-mini-table">
+            <thead><tr><th>Issue</th><th>Line</th></tr></thead>
+            <tbody><tr>
+              <td>${charCount} character(s) found after &lt;/html&gt; — Extra whitespace or line breaks detected</td>
+              <td>${trailingRow.line || '—'}</td>
+            </tr></tbody>
+          </table>`;
       }
     } else if (r.name === 'spaceAfterOpen') {
       if (r.pass) {
@@ -638,13 +602,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.spaceAfterOpenRows.length} tag(s) have space after opening tag</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Preview</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -659,15 +623,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${highlighted}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.spaceAfterOpenRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'spaceBeforeClose') {
       if (r.pass) {
@@ -675,13 +636,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.spaceBeforeCloseRows.length} tag(s) have space before closing tag</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Class</th>
                 <th>Text Preview</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -696,15 +657,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.className)}</td>
                   <td>${highlighted}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.spaceBeforeCloseRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'dotAfterClose') {
       if (r.pass) {
@@ -712,12 +670,12 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.dotAfterCloseRows.length} closing tag(s) followed by a dot</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Tag</th>
                 <th>Snippet</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -725,14 +683,11 @@ function buildRuleTable(result) {
                 <tr>
                   <td>${escapeHtml(h.tagName)}</td>
                   <td>${escapeHtml(h.snippet).replace(/\./g, '<mark style="background:red;color:white;">.</mark>')}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.dotAfterCloseRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'superscriptLink') {
       if (r.pass) {
@@ -740,7 +695,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.superscriptRows.length} superscript(s) have link issues</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -748,6 +702,7 @@ function buildRuleTable(result) {
                 <th>Issue</th>
                 <th>Href</th>
                 <th>Target Found</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -757,14 +712,11 @@ function buildRuleTable(result) {
                   <td class="rule-fail-text">${escapeHtml(h.issue)}</td>
                   <td>${escapeHtml(h.href)}</td>
                   <td class="${h.targetExists ? 'val-pass' : 'val-fail'}">${h.targetExists ? 'Found' : 'Not Found'}</td>
+                  <td>${h.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.superscriptRows.map(h => `<div class="location-row">${lineColBox(h.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'pagebreakCheck') {
       const pagebreakOrderHtml = buildPagebreakOrderDisplay(r);
@@ -773,7 +725,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">Pagebreak series incorrect</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -782,6 +733,7 @@ function buildRuleTable(result) {
                 <th>Found</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -806,15 +758,12 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(String(row.found))}</td>
                   <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
                   <td class="${row.pass ? '' : 'rule-fail-text'}">${reasonHtml || '—'}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `;
               }).join('')}
             </tbody>
           </table>
-          <div class="location-sidebar">
-            ${r.pagebreakRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>
           ${pagebreakOrderHtml}`;
       }
     } else if (r.name === 'tableImage') {
@@ -823,7 +772,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tableImageRows.filter(row => !row.pass).length} table image block(s) have issues</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -832,6 +780,7 @@ function buildRuleTable(result) {
                 <th>Image</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -842,14 +791,11 @@ function buildRuleTable(result) {
                   <td class="${row.hasImage ? 'val-pass' : 'val-fail'}">${row.hasImage ? 'Found' : 'Missing'}</td>
                   <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
                   <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.tableImageRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'referenceCheck') {
       if (r.pass) {
@@ -857,13 +803,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.referenceRows.length} issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Type</th>
                 <th>ID</th>
                 <th>Issue</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -872,14 +818,11 @@ function buildRuleTable(result) {
                   <td><span class="status-badge ${row.type === 'Broken Link' ? 'status-fail' : 'status-warn'}">${escapeHtml(row.type)}</span></td>
                   <td>${escapeHtml(row.id)}</td>
                   <td class="rule-fail-text">${escapeHtml(row.issue)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.referenceRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'cssClassCheck') {
       if (r.pass) {
@@ -887,7 +830,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.cssClassRows.length} class(es) not found in stylesheet</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -895,6 +837,7 @@ function buildRuleTable(result) {
                 <th>Class</th>
                 <th>Looked For</th>
                 <th>Result</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -904,14 +847,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(row.className)}</td>
                   <td>${escapeHtml(row.lookedFor.join(', '))}</td>
                   <td class="val-fail">Not Found</td>
+                  <td>${row.line || '—'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.cssClassRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'figureImage') {
       if (r.pass) {
@@ -919,7 +859,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.figureImageRows.filter(row => !row.pass).length} figure block(s) have issues</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -928,6 +867,7 @@ function buildRuleTable(result) {
                 <th>Caption Class</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -938,14 +878,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(row.captionClass)}</td>
                   <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
                   <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.figureImageRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'crossRefLink') {
       if (r.pass) {
@@ -953,12 +890,12 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.crossRefRows.length} cross reference(s) not linked</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Matched Text</th>
                 <th>Issue</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -966,14 +903,11 @@ function buildRuleTable(result) {
                 <tr>
                   <td class="rule-fail-text">${escapeHtml(row.matchedText)}</td>
                   <td>Not wrapped in &lt;a href&gt;</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.crossRefRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'figureAnchorCheck') {
       if (r.pass) {
@@ -981,13 +915,13 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.figureAnchorRows.length} anchor issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Type</th>
                 <th>ID / href</th>
                 <th>Issue</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -996,14 +930,11 @@ function buildRuleTable(result) {
                   <td class="rule-fail-text">${escapeHtml(row.type)}</td>
                   <td><code>${escapeHtml(row.id)}</code></td>
                   <td>${escapeHtml(row.issue)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.figureAnchorRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'imageNameCheck') {
       if (r.pass) {
@@ -1011,7 +942,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.imageNameRows.filter(row => !row.pass).length} image name issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1020,6 +950,7 @@ function buildRuleTable(result) {
                 <th>Sequence</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -1030,14 +961,11 @@ function buildRuleTable(result) {
                   <td class="${row.sequenceIssue ? 'val-fail' : 'val-pass'}">${row.sequenceIssue ? 'Out of sequence' : (row.patternPass ? 'OK' : '—')}</td>
                   <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
                   <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.imageNameRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'unwantedTag') {
       if (r.pass) {
@@ -1050,7 +978,6 @@ function buildRuleTable(result) {
         };
         tableBody = `
           <p class="rule-fail-text">${r.unwantedTagRows.length} issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1059,6 +986,7 @@ function buildRuleTable(result) {
                 <th>Class</th>
                 <th>Snippet</th>
                 <th>Issue</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -1069,14 +997,11 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(row.className)}</td>
                   <td><code>${escapeHtml(row.snippet)}</code></td>
                   <td class="rule-fail-text">${escapeHtml(row.issue)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.unwantedTagRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'pagebreakChecker') {
       if (r.notApplicable) {
@@ -1121,15 +1046,18 @@ function buildRuleTable(result) {
       if (!r.anchorTexts || r.anchorTexts.length === 0) {
         tableBody = `<p class="rule-na-text">No anchor texts found.</p>`;
       } else {
-        const items = r.anchorTexts.map((a, i) => `
-          <li style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <span>
-              <span style="font-weight:700;font-size:1rem;">${i + 1}. ${escapeHtml(a.text)}</span>
-              <span style="color:var(--accent);margin-left:12px;font-family:monospace;font-size:0.95rem;">${escapeHtml(a.href)}</span>
-            </span>
-            ${lineColBox(a.line)}
-          </li>`).join('');
-        tableBody = `<ol style="list-style:none;padding:1rem 1.2rem;">${items}</ol>`;
+        tableBody = `
+          <table class="rule-mini-table">
+            <thead><tr><th>#</th><th>Anchor Text</th><th>Href</th><th>Line</th></tr></thead>
+            <tbody>
+              ${r.anchorTexts.map((a, i) => `<tr>
+                <td>${i + 1}</td>
+                <td>${escapeHtml(a.text)}</td>
+                <td><code>${escapeHtml(a.href)}</code></td>
+                <td>${a.line || '—'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
       }
     } else if (r.name === 'crossFileHrefCheck') {
       if (r.pass) {
@@ -1137,7 +1065,6 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.crossFileHrefRows.filter(row => !row.pass).length} cross-file href(s) failed</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
@@ -1145,6 +1072,7 @@ function buildRuleTable(result) {
                 <th>Anchor Text</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -1154,26 +1082,23 @@ function buildRuleTable(result) {
                   <td>${escapeHtml(row.text)}</td>
                   <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
                   <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.reason) || '—'}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.crossFileHrefRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'crossFileAnchorDisplay') {
       if (!r.crossFileAnchors || r.crossFileAnchors.length === 0) {
         tableBody = `<p class="rule-na-text">No cross-file .xhtml anchors found.</p>`;
       } else {
         tableBody = `
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>File Name</th>
                 <th style="padding-left:2rem;">Anchor Text</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -1181,14 +1106,11 @@ function buildRuleTable(result) {
                 <tr>
                   <td><code>${escapeHtml(a.href)}</code></td>
                   <td style="padding-left:2rem;">${escapeHtml(a.text)}</td>
+                  <td>${a.line || '—'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.crossFileAnchors.map(a => `<div class="location-row">${lineColBox(a.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'tableStructureCheck') {
       if (r.pass) {
@@ -1196,12 +1118,12 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.tableStructureRows.length} table structure issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Issue Type</th>
                 <th>Detail</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
@@ -1209,14 +1131,11 @@ function buildRuleTable(result) {
                 <tr>
                   <td class="rule-fail-text">${escapeHtml(row.type)}</td>
                   <td>${escapeHtml(row.detail)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.tableStructureRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'boldSpaceCheck') {
       if (r.pass) {
@@ -1224,25 +1143,22 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.boldSpaceRows.length} <b> tag(s) start with a space</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
               <tr>
                 <th>Context</th>
+                <th>Line</th>
               </tr>
             </thead>
             <tbody>
               ${r.boldSpaceRows.map(row => `
                 <tr>
                   <td>${escapeHtml(row.context)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.boldSpaceRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
       }
     } else if (r.name === 'listParaCheck') {
       if (r.notApplicable) {
@@ -1252,24 +1168,61 @@ function buildRuleTable(result) {
       } else {
         tableBody = `
           <p class="rule-fail-text">${r.listParaRows.length} list structure issue(s) found</p>
-          <div class="table-location-wrapper">
           <table class="rule-mini-table">
             <thead>
-              <tr><th>Issue</th><th>Context</th></tr>
+              <tr><th>Issue</th><th>Context</th><th>Line</th></tr>
             </thead>
             <tbody>
               ${r.listParaRows.map(row => `
                 <tr>
                   <td>${escapeHtml(row.type)}</td>
                   <td>${escapeHtml(row.context)}</td>
+                  <td>${row.line || '&mdash;'}</td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>
-          <div class="location-sidebar">
-            ${r.listParaRows.map(row => `<div class="location-row">${lineColBox(row.line)}</div>`).join('')}
-          </div>
-          </div>`;
+          </table>`;
+      }
+    } else if (r.name === 'malformedAttrCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">No malformed class attributes found</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.malformedAttrRows.length} malformed class attribute(s) found</p>
+          <table class="rule-mini-table">
+            <thead>
+              <tr><th>Tag</th><th>Snippet</th><th>Line</th></tr>
+            </thead>
+            <tbody>
+              ${r.malformedAttrRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.tagName)}</td>
+                  <td><code>${escapeHtml(row.snippet)}</code></td>
+                  <td>${row.line || '&mdash;'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'uppercaseTagAttrCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">All tag names and attribute names are lowercase</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.uppercaseTagAttrRows.length} tag(s) have uppercase tag/attribute name</p>
+          <table class="rule-mini-table">
+            <thead><tr><th>Tag</th><th>Snippet</th><th>Issue</th><th>Line</th></tr></thead>
+            <tbody>
+              ${r.uppercaseTagAttrRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.tagName)}</td>
+                  <td><code>${escapeHtml(row.snippet)}</code></td>
+                  <td class="rule-fail-text">${escapeHtml(row.issues)}</td>
+                  <td>${row.line || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
       }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
@@ -1311,7 +1264,6 @@ function buildRuleTable(result) {
     } else {
       // Single row rule
       tableBody = `
-      <div class="table-location-wrapper">
         <table class="rule-mini-table">
           <thead>
             <tr>
@@ -1323,6 +1275,7 @@ function buildRuleTable(result) {
               <th>Margin-Bottom</th>
               <th>Status</th>
               <th>Reason</th>
+              <th>Line</th>
             </tr>
           </thead>
           <tbody>
@@ -1340,13 +1293,10 @@ function buildRuleTable(result) {
               <td>${escapeHtml(r.marginBottomValue || '—')}</td>
               <td><span class="status-badge ${r.pass ? 'status-pass' : 'status-fail'}">${r.pass ? 'PASS' : 'FAIL'}</span></td>
               <td class="${r.pass ? '' : 'rule-fail-text'}">${r.reason ? escapeHtml(r.reason) : '—'}</td>
+              <td>${r.line || '—'}</td>
             </tr>
           </tbody>
-        </table>
-        <div class="location-sidebar">
-          <div class="location-row">${lineColBox(r.line)}</div>
-        </div>
-      </div>`;
+        </table>`;
     }
 
     const headerIsWarning = r.name === 'numberHyphen'
@@ -1549,6 +1499,8 @@ const QC_RULES = [
   { name: 'tableStructureCheck', label: 'Table Structure Check', applies: 'All matter types', checks: 'Every <table> must have <thead> and <tbody>. No <td> directly inside <thead>/<tbody> without <tr>. No <th> tags allowed.' },
   { name: 'boldSpaceCheck', label: 'Bold Space Check', applies: 'All matter types', checks: '<b> tags must not have content starting with a space' },
   { name: 'listParaCheck', label: 'List Para Check', applies: 'All matter types', checks: 'Checks 6 list structure errors: <p> before <li>, nested list without <li>, orphan <li>, empty <li>, empty <p> in <li>, unclosed <li>' },
+  { name: 'malformedAttrCheck', label: 'Malformed Attribute Check', applies: 'All files', checks: 'Misspelled class= attribute in opening tags' },
+  { name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check', applies: 'All files', checks: 'Tag names and attribute names must be lowercase — values not checked' },
 ];
 
 function ensureRulesContinueButton() {

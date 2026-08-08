@@ -1204,6 +1204,20 @@ function parseListParaCheck(text) {
         });
       }
     }
+
+    // CHECK 7: <div> directly inside <ol>/<ul>
+    // Correct:  <ol><li><p>text</p></li></ol>
+    // Wrong:    <ol><div class="foo"><li>...</li></div></ol>
+    const divInListRegex = /<div[\s>]/gi;
+    let divMatch;
+    while ((divMatch = divInListRegex.exec(listContent)) !== null) {
+      const { line } = getLineCol(text, listContentOffset + divMatch.index);
+      hits.push({
+        type: '<div> found inside <' + tag + '> block (check if it is directly inside without <li>)',
+        context: listMatch[0].slice(0, 120),
+        line
+      });
+    }
   }
 
   // CHECK 3: <li> tag found outside of any <ol> or <ul> — it is an orphan
@@ -1221,6 +1235,51 @@ function parseListParaCheck(text) {
     });
   }
 
+  return hits;
+}
+
+function parseMalformedAttr(text) {
+  const hits = [];
+  const tagRegex = /<([a-z][a-z0-9]*)\s[^>]*>/gi;
+  const malformedRegex = /\b(clas\s+\w|clas(?!s\s*=)[^>\s]|clas\s+=|calss=|classs=|clss=)/i;
+  let match;
+
+  while ((match = tagRegex.exec(text)) !== null) {
+    const tagName = match[1].toLowerCase();
+    const snippet = match[0];
+    if (malformedRegex.test(snippet)) {
+      const { line } = getLineCol(text, match.index);
+      hits.push({ tagName, snippet, line });
+    }
+  }
+
+  return hits;
+}
+
+function parseUppercaseTagAttr(text) {
+  const hits = [];
+  const tagRegex = /<([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?\/?>/g;
+  let match;
+  while ((match = tagRegex.exec(text)) !== null) {
+    const tagName = match[1];
+    const attrStr = match[2] || '';
+    const issues = [];
+    if (tagName !== tagName.toLowerCase()) {
+      issues.push(`Tag name <${tagName}> is uppercase`);
+    }
+    const attrNameRegex = /\b([a-zA-Z][a-zA-Z0-9-:]*)(?=\s*=)/g;
+    let attrMatch;
+    while ((attrMatch = attrNameRegex.exec(attrStr)) !== null) {
+      const attrName = attrMatch[1];
+      if (attrName !== attrName.toLowerCase()) {
+        issues.push(`Attribute name "${attrName}" is uppercase`);
+      }
+    }
+    if (issues.length > 0) {
+      const { line } = getLineCol(text, match.index);
+      hits.push({ tagName, snippet: match[0].slice(0, 120), issues, line });
+    }
+  }
   return hits;
 }
 

@@ -70,6 +70,7 @@ in / structured data out. Key functions:
 - `parseFigureAnchors` — id/href pairs for the bidirectional figure-anchor check
 - **`parseTableStructure(text)`** — scans every `<table>...</table>` block and runs 18 structural checks (thead/tbody/tr/td nesting, ordering, emptiness, mismatched closing tags); returns `{ issues: [{type, detail}] }`
 - **`parseBoldSpace(text)`** — finds every `<b>...</b>` tag whose content starts with a space; returns `[{context: '<b> ...</b>'}]`
+- **`parseListParaCheck(text)`** — per `<ol>`/`<ul>` block: `<p>` outside `<li>`, nested list without `<li>` wrapper, orphan `<li>`, empty `<li>`, empty `<p>` inside `<li>`, unclosed `<li>`
 
 ### js/rules.js
 One `ruleXxx(fileData, cssRules)` function per rule, each returning
@@ -230,6 +231,7 @@ toggles, bucket assignments, "fixed" checkbox states).
 | 34 | `crossFileAnchorDisplay` | Cross-File Anchor Display | All matter types | Every cross-file `.xhtml` anchor | Informational only — always PASS, lists href+text |
 | 35 | `tableStructureCheck` | Table Structure Check | All matter types | Every `<table>` block — 18 structural checks: missing/unclosed/empty `<thead>`, `<tr>` before `<thead>`, `<td>` without `<tr>` in `<thead>`, `<thead>` after `<tbody>`, `<tbody>` opened inside `<thead>`, `</thead>` after `<tbody>` started, missing/unclosed/empty `<tbody>`, `<td>` without `<tr>` in `<tbody>`, multiple `<tbody>`, `<tr>` directly inside `<table>`, unclosed `<tr>`, empty `<tr>`, `<td>` directly inside `<table>`, mismatched closing tag on `<td>` | notApplicable if no `<table>` tag found; FAIL if any issue found; PASS otherwise |
 | 36 | `boldSpaceCheck` | Bold Space Check | All matter types | Every `<b>...</b>` tag | notApplicable if `fileData.boldSpaceHits` is `undefined`; PASS if `[]` (no hits); FAIL if any `<b>` tag's content starts with a space |
+| 37 | `listParaCheck` | List Para Check | All matter types | Every `<ol>`/`<ul>` block: `<p>` directly inside list without `<li>`, nested list without `<li>` wrapper, orphan `<li>` outside any list, empty `<li>`, empty `<p>` inside `<li>`, unclosed `<li>` | notApplicable if `fileData.listParaHits` is `undefined`; PASS if `[]` (no hits); FAIL if any structural issue found |
 
 Rule execution order in `RULES` (rules.js) puts `stylesheetLinkCheck` first
 via `RULES.unshift(...)`, then the rest in declaration order. Display/metadata
