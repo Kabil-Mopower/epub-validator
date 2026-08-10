@@ -200,7 +200,29 @@ function buildRuleTable(result) {
     // Build mini table rows based on rule type
     let tableBody = '';
 
-    if (r.name === 'stylesheetLinkCheck') {
+    if (r.name === 'titleTagCheck') {
+      if (r.notApplicable) {
+        tableBody = `<p class="val-na">Title key not found in title.json for this file</p>`;
+      } else if (r.pass) {
+        tableBody = `<p class="val-pass">&#10003; Title matches title.json</p>`;
+      } else if (r.titleTagRows.length === 0) {
+        tableBody = `<p class="rule-fail-text">${escapeHtml(r.reason)}</p>`;
+      } else {
+        tableBody = `
+          <table class="rule-mini-table">
+            <thead><tr><th>Expected</th><th>Actual</th><th>Line</th></tr></thead>
+            <tbody>
+              ${r.titleTagRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.expected)}</td>
+                  <td class="${row.pass ? '' : 'rule-fail-text'}">${escapeHtml(row.actual)}</td>
+                  <td>—</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'stylesheetLinkCheck') {
       if (r.pass) {
         tableBody = `<p class="val-pass">&#10003; Correct stylesheet link found. &nbsp; Line: ${r.line || '—'}</p>`;
       } else {
@@ -1461,6 +1483,7 @@ function getActiveRuleNames() {
 }
 
 const QC_RULES = [
+  { name: 'titleTagCheck', label: 'Title Tag Check', applies: 'All files', checks: 'Compares <title> tag against title.json using filename key (strip after second _)' },
   { name: 'stylesheetLinkCheck', label: 'Stylesheet Link Check',                applies: 'All files',                  checks: 'Verifies that the XHTML file contains exactly: <link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/>. FAILs if missing or different.' },
   { name: 'firstTagMarginTop', label: 'First Tag Margin Top',                applies: 'All matter types',           checks: 'First tag after <body> must have margin-top: 1em' },
   { name: 'fmtitleMargins',    label: 'FM Title Margins',                     applies: 'Front Matter only',          checks: 'fmtitle* class: margin-top 1em, margin-bottom 2em' },

@@ -88,6 +88,7 @@ function validateFile(fileData) {
       boldSpaceRows: result.boldSpaceRows || [],
       listParaRows: result.listParaRows || [],
       malformedAttrRows: result.malformedAttrRows || [],
+      titleTagRows: result.titleTagRows || [],
       uppercaseTagAttrRows: result.uppercaseTagAttrRows || [],
       reason: result.reason || ""
     });

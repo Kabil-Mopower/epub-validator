@@ -116,6 +116,11 @@ async function loadRuleConfig() {
   }
 }
 
+fetch('title.json')
+  .then(r => r.json())
+  .then(data => { window.TITLE_MAP = data; })
+  .catch(() => { window.TITLE_MAP = {}; });
+
 const configReadyPromise = loadRuleConfig();
 
 // ── Theme ──────────────────────────────────────
@@ -481,8 +486,15 @@ async function runValidation(fileList) {
       xhtmlText.search(/<\/html\s*>/i) + '</html>'.length
     ).length;
 
+    // Extract key from filename: bgc_64195_015.xhtml → bgc_64195
+    const shortName = file.name.split('/').pop();
+    const keyMatch = shortName.match(/^([^_]+_[^_]+)_/);
+    const titleKey = keyMatch ? keyMatch[1] : null;
+    const expectedTitleFromJson = titleKey && window.TITLE_MAP ? (window.TITLE_MAP[titleKey] || null) : null;
+
     parsedFiles.push({
       fileName,
+      expectedTitleFromJson,
       matterType: groupingSkipped ? 'unassigned' : getMatterType(fileName),
       firstTag,
       firstTagClass,

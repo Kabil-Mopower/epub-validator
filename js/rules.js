@@ -2338,6 +2338,58 @@ function ruleStylesheetLinkCheck(fileData) {
 }
 ruleStylesheetLinkCheck.ruleName = 'stylesheetLinkCheck';
 
+function ruleTitleTagCheck(fileData) {
+  const actualTitle = (fileData.title || '').trim();
+  const expected = fileData.expectedTitleFromJson;
+
+  // Decode HTML entities so &#x2013; matches – etc.
+  const decodeEntities = str => str
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+
+  const actualTitleDecoded = decodeEntities(actualTitle);
+  const expectedDecoded = decodeEntities((expected || '').trim());
+
+  if (expected === null || expected === undefined) {
+    return {
+      name: 'titleTagCheck', label: 'Title Tag Check',
+      pass: false, notApplicable: false,
+      warning: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      titleTagRows: [],
+      reason: 'Title not found in title.json for this file Contact QC Team or Developer to add the title in title.json'
+    };
+  }
+
+  if (!actualTitle) {
+    return {
+      name: 'titleTagCheck', label: 'Title Tag Check',
+      pass: false, notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      titleTagRows: [{ expected, actual: '(missing)', pass: false }],
+      reason: '<title> tag is missing or empty'
+    };
+  }
+
+  const pass = actualTitleDecoded === expectedDecoded;
+  return {
+    name: 'titleTagCheck', label: 'Title Tag Check',
+    pass, notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    titleTagRows: [{ expected, actual: actualTitle, pass }],
+    reason: pass ? '' : `Title mismatch — expected: "${expectedDecoded}", found: "${actualTitleDecoded}"`
+  };
+}
+ruleTitleTagCheck.ruleName = 'titleTagCheck';
+
 ruleFirstTagMarginTop.ruleName = 'firstTagMarginTop';
 ruleFmtitleMargins.ruleName    = 'fmtitleMargins';
 ruleHeadingStyles.ruleName     = 'headingStyles';
@@ -2640,3 +2692,4 @@ const RULES = [
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);
+RULES.unshift(ruleTitleTagCheck);
