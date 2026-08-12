@@ -1081,6 +1081,25 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'anchorTextCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">&#10003; No anchor text contains "see"</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.anchorTextCheckRows.length} anchor(s) contain keyword "see"</p>
+          <table class="rule-mini-table">
+            <thead><tr><th>Anchor Text</th><th>Href</th><th>Line</th></tr></thead>
+            <tbody>
+              ${r.anchorTextCheckRows.map(row => `
+                <tr>
+                  <td class="rule-fail-text">${escapeHtml(row.text)}</td>
+                  <td><code>${escapeHtml(row.href)}</code></td>
+                  <td>${row.line || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'crossFileHrefCheck') {
       if (r.pass) {
         tableBody = `<p class="val-pass">All cross-file hrefs end with .xhtml</p>`;
@@ -1428,6 +1447,15 @@ function renderCardList() {
   cardList.hidden = false;
   toolbar.hidden = false;
 
+  const exportBtn = document.getElementById('exportReportBtn');
+  if (exportBtn) {
+    exportBtn.hidden = false;
+    exportBtn.onclick = () => {
+      const folderName = (window.currentFolderName || 'epub').replace(/[^a-z0-9_-]/gi, '_');
+      exportReportAsHtml(folderName);
+    };
+  }
+
   if (typeof restoreFixedStates === 'function') restoreFixedStates();
 }
 
@@ -1515,6 +1543,7 @@ const QC_RULES = [
   { name: 'unwantedTag',       label: 'Unwanted Tag Check',                   applies: 'All matter types',           checks: 'No empty tags, orphan closing tags, or unclosed tags' },
   { name: 'imageNameCheck',    label: 'Image Name Check',                     applies: 'Body Matter only',           checks: 'Image filenames must match {chapter}-###.png and be sequential from 001' },
   { name: 'anchorTextDisplay', label: 'Anchor Text Display',                  applies: 'All matter types',           checks: 'Displays the inner text of every <a> tag as a numbered list. Pagebreak markers are ignored. Informational only — always PASS.' },
+  { name: 'anchorTextCheck', label: 'Anchor Text Check',                     applies: 'All files',                  checks: 'Anchor text must not contain keyword "see" (case-insensitive)' },
   { name: 'figureAnchorCheck', label: 'Figure Anchor Check',                  applies: 'All matter types',           checks: 'Bidirectional integrity: every id must be linked by an <a href="#id"> in the same file, and every <a href="#id"> must point to an existing id. Pagebreak ids are skipped.' },
   { name: 'titleConsistencyCheck', label: 'Title Consistency Check',          applies: 'All files',                  checks: 'Checks that every XHTML file has a <title> tag matching the most common title across all files. FAIL if missing, WARNING if different.' },
   { name: 'crossFileHrefCheck', label: 'Cross-File Href Check',              applies: 'All matter types',            checks: 'Every <a href="..."> pointing to another file (no # in href) must end with .xhtml. FAILs otherwise.' },
@@ -1637,20 +1666,6 @@ function ensureStatusFilterDropdown() {
   }
 
   let wrapper = document.querySelector('.status-filter-wrapper');
-  if (!wrapper) {
-    wrapper = document.createElement('div');
-    wrapper.className = 'status-filter-wrapper';
-    wrapper.innerHTML = `
-      <span class="status-filter-label">Status:</span>
-      <select class="status-filter-select" id="status-filter">
-        <option value="all">All</option>
-        <option value="fail">FAIL only</option>
-        <option value="warning">Warning only</option>
-      </select>
-    `;
-    filterBar.appendChild(wrapper);
-  }
-
   return wrapper;
 }
 
@@ -1675,14 +1690,6 @@ function setupToolbarHandlers() {
       renderCardList();
     });
   });
-
-  const statusSelect = document.getElementById("status-filter");
-  if (statusSelect) {
-    statusSelect.addEventListener("change", () => {
-      statusFilter = statusSelect.value;
-      renderCardList();
-    });
-  }
 
   const searchInput = document.getElementById("searchInput");
   const searchClearBtn = document.getElementById("searchClearBtn");
@@ -1869,9 +1876,6 @@ function renderReport(results) {
   if (searchClearBtn) searchClearBtn.hidden = true;
 
   ensureStatusFilterDropdown();
-
-  const statusSelect = document.getElementById("status-filter");
-  if (statusSelect) statusSelect.value = "all";
 
   document.querySelectorAll(".filter-toggle").forEach(btn => {
     btn.classList.add("active");
@@ -2505,3 +2509,225 @@ document.addEventListener('keydown', function(e) {
 
 document.getElementById('cssModalCloseBtn')
   .addEventListener('click', closeCssModal);
+
+function exportReportAsHtml(folderName) {
+  const results = window.lastValidationResults || [];
+  if (!results.length) { alert('No report to export. Please run validation first.'); return; }
+
+  let fileName;
+  if (results.length === 1) {
+    const singleName = results[0].fileName.split('/').pop().replace(/\.xhtml$/i, '');
+    fileName = `${singleName}_report.html`;
+  } else {
+    fileName = `${folderName || 'epub'}_report.html`;
+  }
+  const esc = escapeHtml;
+
+  const badge = (status) => {
+    if (status === 'PASS') return `<span class="status-badge status-pass">PASS</span>`;
+    if (status === 'FAIL') return `<span class="status-badge status-fail">FAIL</span>`;
+    return `<span class="status-badge status-warn">WARN</span>`;
+  };
+
+  const ruleStatusBadge = (r) => {
+    if (r.notApplicable) return `<span class="status-badge status-na">N/A</span>`;
+    if (r.pass && !r.warning) return `<span class="status-badge status-pass">PASS</span>`;
+    if (r.warning) return `<span class="status-badge status-warn">WARN</span>`;
+    return `<span class="status-badge status-fail">FAIL</span>`;
+  };
+
+  const renderRuleDetail = (r) => {
+    if (r.notApplicable) return `<p class="val-na">Not applicable for this file</p>`;
+    if (r.pass && !r.warning) return `<p class="val-pass">&#10003; Passed</p>`;
+
+    // Pick the right rows array based on rule name
+    const rowsMap = {
+      headingRows: r.headingRows, footnoteRows: r.footnoteRows, h1Rows: r.h1Rows,
+      copyrightRows: r.copyrightRows, doubleSpaceRows: r.doubleSpaceRows,
+      tabSpaceRows: r.tabSpaceRows, capitalRows: r.capitalRows, endPuncRows: r.endPuncRows,
+      ampersandRows: r.ampersandRows, trailingSpaceRows: r.trailingSpaceRows,
+      spaceAfterOpenRows: r.spaceAfterOpenRows, spaceBeforeCloseRows: r.spaceBeforeCloseRows,
+      dotAfterCloseRows: r.dotAfterCloseRows, superscriptRows: r.superscriptRows,
+      pagebreakRows: r.pagebreakRows, tableImageRows: r.tableImageRows,
+      referenceRows: r.referenceRows, cssClassRows: r.cssClassRows,
+      figureImageRows: r.figureImageRows, crossRefRows: r.crossRefRows,
+      imageNameRows: r.imageNameRows, figureAnchorRows: r.figureAnchorRows,
+      crossFileHrefRows: r.crossFileHrefRows, tableStructureRows: r.tableStructureRows,
+      boldSpaceRows: r.boldSpaceRows, listParaRows: r.listParaRows,
+      malformedAttrRows: r.malformedAttrRows, uppercaseTagAttrRows: r.uppercaseTagAttrRows,
+      titleTagRows: r.titleTagRows, anchorTextCheckRows: r.anchorTextCheckRows,
+      unwantedTagRows: r.unwantedTagRows, numberHyphenRows: r.numberHyphenRows,
+      hyphenSpaceRows: r.hyphenSpaceRows
+    };
+
+    // Find first non-empty rows array
+    let rows = [];
+    for (const key of Object.keys(rowsMap)) {
+      if (rowsMap[key] && rowsMap[key].length > 0) { rows = rowsMap[key]; break; }
+    }
+
+    if (r.reason && rows.length === 0) {
+      return `<p class="rule-fail-text">${esc(r.reason)}</p>`;
+    }
+
+    if (rows.length === 0) return `<p class="rule-fail-text">${esc(r.reason || 'Failed')}</p>`;
+
+    // Build generic table from row keys
+    const keys = Object.keys(rows[0]).filter(k => k !== 'pass' && k !== 'warning' && k !== 'notApplicable');
+    return `
+      ${r.reason ? `<p class="rule-fail-text" style="margin-bottom:6px;">${esc(r.reason)}</p>` : ''}
+      <table class="rule-mini-table">
+        <thead><tr>${keys.map(k => `<th>${esc(k)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.map(row => `<tr class="${row.pass === false ? 'row-fail' : ''}">
+            ${keys.map(k => `<td>${Array.isArray(row[k]) ? esc(row[k].join(', ')) : esc(String(row[k] ?? ''))}</td>`).join('')}
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  };
+
+  const totalFiles = results.length;
+  const passFiles = results.filter(r => r.status === 'PASS').length;
+  const failFiles = results.filter(r => r.status === 'FAIL').length;
+  const warnFiles = results.filter(r => r.status === 'WARNING').length;
+
+  const filesHtml = results.map((result, fi) => {
+    const shortName = result.fileName.split('/').pop();
+    const rulesHtml = result.ruleResults.map((r, ri) => `
+      <tr class="rule-row" id="rule-${fi}-${ri}">
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border);width:40%;">
+          <span class="rule-label">${esc(r.label)}</span>
+        </td>
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border);width:80px;">${ruleStatusBadge(r)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid var(--border);">
+          <div class="rule-detail" id="detail-${fi}-${ri}" style="display:none;">
+            ${renderRuleDetail(r)}
+          </div>
+          <button class="toggle-rule-btn" onclick="toggleRule('detail-${fi}-${ri}', this)" style="font-size:0.75rem;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:var(--bg-secondary);cursor:pointer;color:var(--text-muted);">
+            ${r.notApplicable || r.pass ? '' : '▼ Details'}
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+    <div class="result-card" id="card-${fi}">
+      <button class="card-header" onclick="toggleCard('cardbody-${fi}', this)">
+        <span class="chevron">&#9658;</span>
+        <span class="card-filename">${esc(shortName)}</span>
+        <span class="card-title">${esc(result.title || '')}</span>
+        <span class="matter-badge">${esc(result.matterType || '')}</span>
+        ${badge(result.status)}
+      </button>
+      <div class="card-body" id="cardbody-${fi}" style="display:none;">
+        <table class="card-table" style="width:100%;border-collapse:collapse;">
+          <tbody>${rulesHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  const exportCss = `
+    :root { --accent:#f97316; --accent-light:#fff7ed; --pass:#16a34a; --pass-bg:#dcfce7; --fail:#dc2626; --fail-bg:#fee2e2; --warning:#d97706; --warning-bg:#fef9c3; --border:#e5e7eb; --bg-surface:#ffffff; --bg-secondary:#f9fafb; --text-primary:#111827; --text-muted:#6b7280; --shadow:0 1px 3px rgba(0,0,0,0.08); }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;color:var(--text-primary);padding:24px;}
+    h1{font-size:1.4rem;font-weight:700;margin-bottom:4px;}
+    .meta{font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;}
+    .export-toolbar{display:flex;gap:10px;margin-bottom:20px;}
+    .export-toolbar button{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg-surface);cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--text-primary);}
+    .export-toolbar button:hover{background:var(--bg-secondary);}
+    .summary-card{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;}
+    .summary-item{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;box-shadow:var(--shadow);}
+    .summary-label{display:block;font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+    .summary-value{display:block;font-size:2.5rem;font-weight:700;color:var(--text-primary);line-height:1.1;}
+    .summary-item.pass .summary-value{color:var(--pass);}
+    .summary-item.fail .summary-value{color:var(--fail);}
+    .summary-item.warning .summary-value{color:var(--warning);}
+    .card-list{display:flex;flex-direction:column;gap:8px;padding-bottom:0.5rem;}
+    .result-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-surface);margin-bottom:8px;}
+    .card-header{width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-surface);border:none;cursor:pointer;text-align:left;font-size:0.88rem;color:var(--text-primary);}
+    .card-header:hover{background:var(--bg-secondary);}
+    .card-filename{font-weight:600;}
+    .card-title{flex:1;text-align:center;color:#888;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .chevron{color:var(--text-muted);font-size:0.75rem;transition:transform 0.15s;}
+    .chevron.open{transform:rotate(90deg);}
+    .card-body{padding:12px 14px 14px;background:var(--bg-secondary);border-top:1px solid var(--border);}
+    .status-badge{padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;}
+    .status-pass{background:var(--pass-bg);color:var(--pass);}
+    .status-fail{background:var(--fail-bg);color:var(--fail);}
+    .status-warn{background:var(--warning-bg);color:var(--warning);}
+    .status-na{background:#f3f4f6;color:var(--text-muted);}
+    .rule-label{font-weight:600;font-size:0.875rem;}
+    .rule-mini-table{width:100%;border-collapse:collapse;font-size:0.83rem;margin-top:6px;}
+    .rule-mini-table th{text-align:left;padding:6px 10px;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);border-bottom:2px solid var(--border);}
+    .rule-mini-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+    .rule-mini-table tr:last-child td{border-bottom:none;}
+    .row-fail td{background:#fff5f5;}
+    .val-pass{color:var(--pass);font-weight:600;}
+    .val-fail{color:var(--fail);font-weight:600;}
+    .val-na{color:var(--text-muted);font-style:italic;font-size:0.85rem;}
+    .rule-fail-text{color:var(--fail);font-size:0.85rem;margin:4px 0;}
+    .matter-badge{font-size:0.7rem;padding:2px 8px;border-radius:10px;font-weight:600;background:#e0f2fe;color:#0369a1;}
+    code{font-family:'Consolas','Courier New',monospace;font-size:0.8rem;background:#f3f4f6;padding:1px 4px;border-radius:3px;word-break:break-all;}
+  `;
+
+  const exportJs = `
+    function toggleCard(id, btn) {
+      const body = document.getElementById(id);
+      const chevron = btn.querySelector('.chevron');
+      if (!body) return;
+      const open = body.style.display === 'block';
+      body.style.display = open ? 'none' : 'block';
+      if (chevron) chevron.classList.toggle('open', !open);
+    }
+    function toggleRule(id, btn) {
+      const detail = document.getElementById(id);
+      if (!detail) return;
+      const open = detail.style.display === 'block';
+      detail.style.display = open ? 'none' : 'block';
+      btn.textContent = open ? '▼ Details' : '▲ Hide';
+    }
+    document.getElementById('expandAllBtn').addEventListener('click', () => {
+      document.querySelectorAll('.card-body').forEach(el => el.style.display = 'block');
+      document.querySelectorAll('.chevron').forEach(el => el.classList.add('open'));
+    });
+    document.getElementById('collapseAllBtn').addEventListener('click', () => {
+      document.querySelectorAll('.card-body').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.chevron').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('.rule-detail').forEach(el => el.style.display = 'none');
+    });
+  `;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EPUB Validation Report — ${esc(folderName || 'Export')}</title>
+<style>${exportCss}</style>
+</head>
+<body>
+  <h1>EPUB Validation Report</h1>
+  <div class="meta">Folder: ${esc(folderName || '')} &nbsp;|&nbsp; Generated: ${new Date().toLocaleString()}</div>
+  <div class="export-toolbar">
+    <button id="expandAllBtn">Expand All</button>
+    <button id="collapseAllBtn">Collapse All</button>
+  </div>
+  <div class="summary-card">
+    <div class="summary-item"><span class="summary-value">${totalFiles}</span><span class="summary-label">Total Files</span></div>
+    <div class="summary-item pass"><span class="summary-value">${passFiles}</span><span class="summary-label">Passed</span></div>
+    <div class="summary-item fail"><span class="summary-value">${failFiles}</span><span class="summary-label">Failed</span></div>
+    <div class="summary-item warning"><span class="summary-value">${warnFiles}</span><span class="summary-label">Warnings</span></div>
+  </div>
+  <div class="card-list">${filesHtml}</div>
+  <script>${exportJs}<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}

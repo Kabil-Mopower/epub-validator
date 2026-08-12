@@ -32,6 +32,7 @@
     "unwantedTag": true,
     "imageNameCheck": true,
     "anchorTextDisplay": true,
+    "anchorTextCheck": true,
     "figureAnchorCheck": true,
     "titleConsistencyCheck": false,
     "crossFileHrefCheck": true,

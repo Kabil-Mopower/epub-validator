@@ -222,11 +222,11 @@
               <button type="button" class="filter-toggle active" data-filter="front">Front Matter</button>
               <button type="button" class="filter-toggle active" data-filter="body">Body Matter</button>
               <button type="button" class="filter-toggle active" data-filter="end">End Matter</button>
-              <button type="button" class="filter-toggle fail-toggle" data-filter="failOnly">FAIL only</button>
             </div>
             <div class="search-bar">
               <input type="text" id="searchInput" class="search-input" placeholder="Search by filename...">
               <button type="button" id="searchClearBtn" class="search-clear" hidden title="Clear search">&#10005;</button>
+              <button type="button" id="exportReportBtn" class="btn primary small" hidden>&#8681; Export HTML</button>
             </div>
           </div>
           <div id="cardList" class="card-list" hidden></div>
@@ -242,12 +242,6 @@
             <h2 class="step-title">Output</h2>
             <p class="step-subtitle">Validation rule summary</p>
           </div>
-        </div>
-
-        <div class="filter-bar output-filter-bar" id="outputFilterBar">
-          <button type="button" class="filter-toggle active" data-output-filter="all">All</button>
-          <button type="button" class="filter-toggle" data-output-filter="fail">Fail Only</button>
-          <button type="button" class="filter-toggle" data-output-filter="warning">Warning Only</button>
         </div>
 
         <div id="output-panel-content"></div>

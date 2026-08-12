@@ -301,6 +301,8 @@ if (revalidateBtn) revalidateBtn.addEventListener('click', async () => {
 
   try {
     const results = await runValidation(selectedFileList);
+    window.lastValidationResults = results;
+    window.currentFolderName = document.getElementById('folderName').textContent;
     renderReport(results);
   } catch (err) {
     console.error(err);
@@ -392,6 +394,8 @@ async function executeValidation() {
     }
 
     const results = await runValidation(selectedFileList);
+    window.lastValidationResults = results;
+    window.currentFolderName = document.getElementById('folderName').textContent;
     renderReport(results);
     document.getElementById('bucketingSection').hidden = true;
 

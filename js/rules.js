@@ -2259,6 +2259,46 @@ function ruleAnchorTextDisplay(fileData) {
 }
 ruleAnchorTextDisplay.ruleName = 'anchorTextDisplay';
 
+function ruleAnchorTextCheck(fileData) {
+  const anchors = fileData.anchorTexts || [];
+
+  if (anchors.length === 0) {
+    return {
+      name: 'anchorTextCheck', label: 'Anchor Text Check',
+      pass: true, notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      anchorTextCheckRows: [], reason: ''
+    };
+  }
+
+  const hits = anchors.filter(a => /\bsee\b/i.test(a.text));
+
+  if (hits.length === 0) {
+    return {
+      name: 'anchorTextCheck', label: 'Anchor Text Check',
+      pass: true, notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      anchorTextCheckRows: [], reason: ''
+    };
+  }
+
+  return {
+    name: 'anchorTextCheck', label: 'Anchor Text Check',
+    pass: false, notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    anchorTextCheckRows: hits.map(h => ({
+      text: h.text,
+      href: h.href,
+      line: h.line || ''
+    })),
+    reason: `${hits.length} anchor(s) contain keyword "see" the keyword that should not be used in anchor text`
+  };
+}
+ruleAnchorTextCheck.ruleName = 'anchorTextCheck';
+
 function ruleCrossFileHrefCheck(fileData) {
   const anchors = fileData.crossFileAnchors || [];
 
@@ -2680,6 +2720,7 @@ const RULES = [
   ruleUnwantedTag,
   ruleImageNameCheck,
   ruleAnchorTextDisplay,
+  ruleAnchorTextCheck,
   ruleFigureAnchorCheck,
   ruleTitleConsistencyCheck,
   ruleCrossFileHrefCheck,

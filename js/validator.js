@@ -81,6 +81,7 @@ function validateFile(fileData) {
       crossRefRows: result.crossRefRows || [],
       imageNameRows: result.imageNameRows || [],
       anchorTexts: result.anchorTexts || [],
+      anchorTextCheckRows: result.anchorTextCheckRows || [],
       figureAnchorRows: result.figureAnchorRows || [],
       crossFileHrefRows: result.crossFileHrefRows || [],
       crossFileAnchors: result.crossFileAnchors || [],
