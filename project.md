@@ -266,7 +266,56 @@ entities used instead). Fully dependency-free by design; relies solely on
 native browser APIs (`FileReader`, `<input webkitdirectory>`, `fetch`,
 `localStorage`, HTML5 Drag-and-Drop).
 
-## 10. Known Issues and TODOs
+## 10. How to Add a New Rule
+
+No auto-discovery — 3–5 manual touch points, each keyed by the same rule
+`name` string.
+
+1. **Write the function** in `js/rules.js`:
+   ```js
+   function ruleYourThing(fileData, cssRules) {
+     // guard clauses: return the SAME shape early, never a partial object
+     if (fileData.matterType !== 'body') {
+       return { name: 'yourThing', label: 'Your Thing', pass: true, notApplicable: true, reason: '' };
+     }
+     // ...inspect fileData (see parser.js for available fields) and/or cssRules...
+     return { name: 'yourThing', label: 'Your Thing', pass, reason, /* yourThingRows: [...] if multi-row */ };
+   }
+   // only if the function name shouldn't be the id:
+   ruleYourThing.ruleName = 'yourThing';
+   ```
+   `pass`/`notApplicable`/`warning` are the status flags reporter.js checks
+   (priority FAIL > WARNING > PASS). Add any extra fields (`reason`, detail
+   rows) the report table needs.
+
+2. **Register it** — add `ruleYourThing` to the `RULES` array at the bottom
+   of `js/rules.js`.
+
+3. **Add metadata** — add a matching entry to `QC_RULES` in
+   `js/reporter.js:1513`: `{ name: 'yourThing', label: 'Your Thing', applies: 'Body Matter only', checks: 'one-line description' }`.
+   Required, not decorative — `getActiveRuleNames()` reads `QC_RULES`, so a
+   rule missing here never runs even if it's in `RULES`.
+
+4. **(Optional) config.json** — add `"yourThing": true` to the `rules` map
+   for explicitness/parity with the other ~41 entries. Omitting it defaults
+   to enabled.
+
+5. **If the rule returns a new `xxxRows` detail array** (not just flat
+   pass/fail): add a passthrough line in `validator.js`'s
+   `ruleResults.push({...})` block, and a rendering branch in
+   `buildRuleTable()` in `reporter.js` (find an existing rule like
+   `headingRows` and mirror its branch + NA-text ternary entry).
+
+6. **If the rule needs new parsed data** not already on `fileData` (e.g. a
+   new regex scan): add a `parseYourThing(text)` function in `js/parser.js`
+   and wire it into the `for each xhtml file` loop in `app.js`'s
+   `runValidation()` so the result lands on `fileData` before rules run.
+
+Test manually — no test suite exists. Serve over `http://`, run against a
+sample EPUB folder, toggle the rule in the Rules tab, verify PASS/FAIL/NA
+paths.
+
+## 11. Known Issues and TODOs
 
 - Regex-based parsing throughout instead of a real `DOMParser`/XML parser —
   fast and dependency-free, but fragile against malformed or unusual markup.

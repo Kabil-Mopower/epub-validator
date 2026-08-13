@@ -1265,6 +1265,25 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'externalUrlSpaceCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">No external URLs with spaces found</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${r.externalUrlSpaceRows.length} external URL(s) contain a space</p>
+          <table class="rule-mini-table">
+            <thead><tr><th>Href</th><th>Anchor Text</th><th>Line</th></tr></thead>
+            <tbody>
+              ${r.externalUrlSpaceRows.map(row => `
+                <tr>
+                  <td><code>${escapeHtml(row.href)}</code></td>
+                  <td>${escapeHtml(row.text)}</td>
+                  <td>${row.line || '&mdash;'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
         tableBody = `
@@ -1371,6 +1390,8 @@ function createResultCard(result) {
 
   const badgeClass = isWarning ? "status-warn" : isFail ? "status-fail" : "status-pass";
   const badgeText = isWarning ? "WARNING" : result.status;
+  const headerColor = "#f5b041";
+  const shortName = result.fileName.split('/').pop();
 
   const card = document.createElement("div");
   card.className = "result-card collapsed";
@@ -1379,9 +1400,9 @@ function createResultCard(result) {
   card.dataset.status = result.status;
 
   card.innerHTML = `
-    <button type="button" class="card-header">
+    <button type="button" class="card-header" style="background:${headerColor};">
       <span class="chevron">&#9656;</span>
-      <span class="card-filename">${escapeHtml(result.fileName)}</span>
+      <span class="card-filename">${escapeHtml(shortName)}</span>
       ${result.title ? `<span class="card-title${result.title !== result.expectedTitle ? ' title-mismatch' : ''}">"${escapeHtml(result.title)}"</span>` : ''}
       <span class="matter-tag matter-${result.matterType}">${escapeHtml(matterLabel)}</span>
       <span class="status-badge ${badgeClass}">${badgeText}</span>
@@ -1553,6 +1574,7 @@ const QC_RULES = [
   { name: 'listParaCheck', label: 'List Para Check', applies: 'All matter types', checks: 'Checks 6 list structure errors: <p> before <li>, nested list without <li>, orphan <li>, empty <li>, empty <p> in <li>, unclosed <li>' },
   { name: 'malformedAttrCheck', label: 'Malformed Attribute Check', applies: 'All files', checks: 'Misspelled class= attribute in opening tags' },
   { name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check', applies: 'All files', checks: 'Tag names and attribute names must be lowercase — values not checked' },
+  { name: 'externalUrlSpaceCheck', label: 'External URL Space Check', applies: 'All matter types', checks: 'External URLs in href containing spaces' },
 ];
 
 function ensureRulesContinueButton() {

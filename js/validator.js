@@ -91,6 +91,7 @@ function validateFile(fileData) {
       malformedAttrRows: result.malformedAttrRows || [],
       titleTagRows: result.titleTagRows || [],
       uppercaseTagAttrRows: result.uppercaseTagAttrRows || [],
+      externalUrlSpaceRows: result.externalUrlSpaceRows || [],
       reason: result.reason || ""
     });
   }

@@ -5,6 +5,39 @@
    validator, and reporter modules.
    ============================================================ */
 
+const SHOW_ANNOUNCEMENT = false; // set false to disable popup
+
+function showAnnouncementPopup() {
+  const message = [
+    'Hi Team,',
+    'File-ஐ server-ல் upload செய்யும்போது, Export HTML-ல் இருக்கும் report-ஐயும் upload செய்ய வேண்டும்.',
+    'Original XHTML file மற்றும் HTML report இரண்டையும் Completed folder-ல் upload செய்ய வேண்டும்.',
+    'ஏதேனும் doubt இருந்தால், QC Team அல்லது Team In-charge-ஐ தொடர்பு கொள்ளவும்.'
+  ].join('\n');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  overlay.innerHTML = `
+    <div class="announcement-box" style="background:#fff;border-radius:10px;max-width:480px;width:90%;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+      <div style="background:#f97316;color:#fff;padding:14px 18px;font-weight:700;font-size:16px;">
+        📢 Team Notice
+      </div>
+      <div style="padding:18px;color:#222;font-size:15px;line-height:1.6;white-space:pre-line;">${escapeHtml(message)}</div>
+      <div style="padding:12px 18px;text-align:right;border-top:1px solid #eee;">
+        <button id="announcementCloseBtn" style="background:#f97316;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer;">Got it &#10003;</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#announcementCloseBtn').addEventListener('click', close);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) close();
+  });
+}
+
 // ── Mark as Fixed ──────────────────────────────
 function getFixedKey(fileName, ruleName) {
   return `fixed_${fileName}_${ruleName}`;
@@ -476,6 +509,7 @@ async function runValidation(fileList) {
     const imageSrcLocations = parseImageSrcLocations(xhtmlText);
     const anchorTexts = parseAnchorTexts(xhtmlText);
     const figureAnchors = parseFigureAnchors(xhtmlText);
+    const externalUrlSpaceHits = parseExternalUrlSpace(xhtmlText);
     const crossFileAnchors = parseCrossFileAnchors(xhtmlText);
     const stylesheetLink = parseStylesheetLink(xhtmlText);
     const { emptyTags, orphanClose, unclosedTags } = parseUnwantedTags(xhtmlText);
@@ -534,6 +568,7 @@ async function runValidation(fileList) {
       imageSrcLocations,
       anchorTexts,
       figureAnchors,
+      externalUrlSpaceHits,
       crossFileAnchors,
       stylesheetLink,
       emptyTags,
@@ -680,6 +715,8 @@ function showCopyrightModal(message) {
 
 // Default tab on load
 switchTab('epubSelect');
+
+if (SHOW_ANNOUNCEMENT) showAnnouncementPopup();
 
 // Last modified stamp
 document.getElementById('lastModifiedStamp').textContent =

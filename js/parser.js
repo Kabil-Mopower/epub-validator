@@ -1283,6 +1283,30 @@ function parseUppercaseTagAttr(text) {
   return hits;
 }
 
+/**
+ * Finds every <a href="..."> where href starts with http, https, or www
+ * and the href value contains a space character.
+ * Returns [{ href, text, line }].
+ */
+function parseExternalUrlSpace(text) {
+  const hits = [];
+  const cleaned = text.replace(/<a\s[^>]*\/>/gi, '');
+  const re = /<a\s([^>]*)>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = re.exec(cleaned)) !== null) {
+    const attrs = m[1];
+    const hrefM = attrs.match(/href\s*=\s*["']([^"']*)["']/i);
+    if (!hrefM) continue;
+    const href = hrefM[1];
+    if (!/^(https?:|www\.)/i.test(href.trim())) continue;
+    if (!/\s/.test(href)) continue;
+    const anchorText = m[2].replace(/<[^>]+>/g, '').trim();
+    const { line } = getLineCol(text, m.index);
+    hits.push({ href, text: anchorText, line });
+  }
+  return hits;
+}
+
 function parseFigureAnchors(xhtmlText) {
   const ids = [];
   const hrefs = [];

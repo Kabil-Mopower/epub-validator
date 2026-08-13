@@ -41,6 +41,7 @@
     "boldSpaceCheck": true,
     "listParaCheck": true,
     "malformedAttrCheck": true,
-    "uppercaseTagAttrCheck": true
+    "uppercaseTagAttrCheck": true,
+    "externalUrlSpaceCheck": true
   }
 }

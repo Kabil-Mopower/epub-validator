@@ -2689,6 +2689,39 @@ function ruleUppercaseTagAttrCheck(fileData) {
 }
 ruleUppercaseTagAttrCheck.ruleName = 'uppercaseTagAttrCheck';
 
+function ruleExternalUrlSpaceCheck(fileData) {
+  const hits = fileData.externalUrlSpaceHits || [];
+
+  if (hits.length === 0) {
+    return {
+      name: 'externalUrlSpaceCheck',
+      label: 'External URL Space Check',
+      pass: true,
+      notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      externalUrlSpaceRows: [],
+      reason: ''
+    };
+  }
+
+  return {
+    name: 'externalUrlSpaceCheck',
+    label: 'External URL Space Check',
+    pass: false,
+    notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    externalUrlSpaceRows: hits.map(h => ({
+      href: h.href,
+      text: h.text,
+      line: h.line || ''
+    })),
+    reason: `${hits.length} external URL(s) contain a space`
+  };
+}
+ruleExternalUrlSpaceCheck.ruleName = 'externalUrlSpaceCheck';
+
 const RULES = [
   ruleFirstTagMarginTop,
   ruleFmtitleMargins,
@@ -2729,7 +2762,8 @@ const RULES = [
   ruleBoldSpaceCheck,
   ruleListParaCheck,
   ruleMalformedAttrCheck,
-  ruleUppercaseTagAttrCheck
+  ruleUppercaseTagAttrCheck,
+  ruleExternalUrlSpaceCheck
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);
