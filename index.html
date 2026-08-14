@@ -226,6 +226,8 @@
             <div class="search-bar">
               <input type="text" id="searchInput" class="search-input" placeholder="Search by filename...">
               <button type="button" id="searchClearBtn" class="search-clear" hidden title="Clear search">&#10005;</button>
+            </div>
+            <div class="export-actions" style="margin-left:auto;display:flex;align-items:center;">
               <button type="button" id="exportReportBtn" class="btn primary small" hidden>&#8681; Export HTML</button>
             </div>
           </div>
@@ -337,6 +339,25 @@
       <div class="modal-buttons" style="margin-top:16px;">
         <button id="pagebreak-cancel">Cancel</button>
         <button id="pagebreak-confirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="title-modal" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="title-modal-header">
+        <span class="title-modal-icon">&#128214;</span>
+        <span>Title Check</span>
+      </div>
+      <div class="title-modal-body">
+        <p class="title-modal-subtitle">Enter the expected EPUB title to validate against each file's &lt;title&gt; tag</p>
+        <input type="text" id="title-input" placeholder="e.g. Chapter One"/>
+        <p id="title-error" class="rule-fail-text" hidden>Please enter a title</p>
+        <span class="title-info-tip">&#128161; Tip: Copy the title exactly as it appears in the book</span>
+        <div class="modal-buttons">
+          <button id="title-skip">Skip</button>
+          <button id="title-confirm">Confirm &#10003;</button>
+        </div>
       </div>
     </div>
   </div>

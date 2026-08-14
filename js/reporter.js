@@ -5,6 +5,13 @@
    and the collapsible file card list (with filter + search).
    ============================================================ */
 
+function decodeHtmlEntities(str) {
+  return (str || '')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&');
+}
+
 let currentResults = [];
 let activeFilters = new Set(["front", "body", "end"]);
 let statusFilter = "all"; // "all" | "fail" | "warning"
@@ -200,7 +207,25 @@ function buildRuleTable(result) {
     // Build mini table rows based on rule type
     let tableBody = '';
 
-    if (r.name === 'titleTagCheck') {
+    if (r.name === 'titleCheck') {
+      if (r.notApplicable) {
+        tableBody = `<p class="val-na">Title Check skipped — no expected title entered</p>`;
+      } else {
+        tableBody = `
+          <table class="rule-mini-table">
+            <thead><tr><th>Expected</th><th>Actual</th><th>Status</th></tr></thead>
+            <tbody>
+              ${r.titleCheckRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(row.expected)}</td>
+                  <td class="${row.pass ? 'val-pass' : 'val-fail'}">${escapeHtml(row.actual)}</td>
+                  <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
+    } else if (r.name === 'titleTagCheck') {
       if (r.notApplicable) {
         tableBody = `<p class="val-na">Title key not found in title.json for this file</p>`;
       } else if (r.pass) {
@@ -1403,7 +1428,7 @@ function createResultCard(result) {
     <button type="button" class="card-header" style="background:${headerColor};">
       <span class="chevron">&#9656;</span>
       <span class="card-filename">${escapeHtml(shortName)}</span>
-      ${result.title ? `<span class="card-title${result.title !== result.expectedTitle ? ' title-mismatch' : ''}">"${escapeHtml(result.title)}"</span>` : ''}
+      ${result.title ? `<span class="card-title${result.title !== result.expectedTitle ? ' title-mismatch' : ''}">"${escapeHtml(decodeHtmlEntities(result.title))}"</span>` : ''}
       <span class="matter-tag matter-${result.matterType}">${escapeHtml(matterLabel)}</span>
       <span class="status-badge ${badgeClass}">${badgeText}</span>
     </button>
@@ -1532,6 +1557,7 @@ function getActiveRuleNames() {
 }
 
 const QC_RULES = [
+  { name: 'titleCheck', label: 'Title Check', applies: 'All files', checks: 'Compares <title> tag against user-entered title' },
   { name: 'titleTagCheck', label: 'Title Tag Check', applies: 'All files', checks: 'Compares <title> tag against title.json using filename key (strip after second _)' },
   { name: 'stylesheetLinkCheck', label: 'Stylesheet Link Check',                applies: 'All files',                  checks: 'Verifies that the XHTML file contains exactly: <link rel="stylesheet" type="text/css" href="../styles/stylesheet.css"/>. FAILs if missing or different.' },
   { name: 'firstTagMarginTop', label: 'First Tag Margin Top',                applies: 'All matter types',           checks: 'First tag after <body> must have margin-top: 1em' },
@@ -2637,7 +2663,7 @@ function exportReportAsHtml(folderName) {
       <button class="card-header" onclick="toggleCard('cardbody-${fi}', this)">
         <span class="chevron">&#9658;</span>
         <span class="card-filename">${esc(shortName)}</span>
-        <span class="card-title">${esc(result.title || '')}</span>
+        <span class="card-title">${esc(decodeHtmlEntities(result.title || ''))}</span>
         <span class="matter-badge">${esc(result.matterType || '')}</span>
         ${badge(result.status)}
       </button>

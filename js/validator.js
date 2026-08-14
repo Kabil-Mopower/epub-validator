@@ -90,6 +90,7 @@ function validateFile(fileData) {
       listParaRows: result.listParaRows || [],
       malformedAttrRows: result.malformedAttrRows || [],
       titleTagRows: result.titleTagRows || [],
+      titleCheckRows: result.titleCheckRows || [],
       uppercaseTagAttrRows: result.uppercaseTagAttrRows || [],
       externalUrlSpaceRows: result.externalUrlSpaceRows || [],
       reason: result.reason || ""

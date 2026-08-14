@@ -5,15 +5,20 @@
    validator, and reporter modules.
    ============================================================ */
 
-const SHOW_ANNOUNCEMENT = false; // set false to disable popup
+const SHOW_ANNOUNCEMENT = true; // set false to disable popup
 
 function showAnnouncementPopup() {
-  const message = [
-    'Hi Team,',
-    'File-ஐ server-ல் upload செய்யும்போது, Export HTML-ல் இருக்கும் report-ஐயும் upload செய்ய வேண்டும்.',
-    'Original XHTML file மற்றும் HTML report இரண்டையும் Completed folder-ல் upload செய்ய வேண்டும்.',
-    'ஏதேனும் doubt இருந்தால், QC Team அல்லது Team In-charge-ஐ தொடர்பு கொள்ளவும்.'
-  ].join('\n');
+const message = [
+  'Hi Team,',
+  '',
+  '🆕 New Updates in EPUB Validator Tool:',
+  '',
+  '1. External URL Space Check — href-ல் space இருந்தால் error காட்டும் (e.g. www.google. com)',
+  '2. Export HTML Button — Validation report-ஐ HTML file-ஆக download செய்யலாம். Server-ல் upload செய்யும்போது இந்த report-ஐயும் Completed folder-ல் upload செய்யவும்.',
+  '3. Title Check — Validation run பண்ணும்போது ஒரு popup வரும், அதில் EPUB-ன் title-ஐ enter செய்யவும். Tool அந்த title-ஐ ஒவ்வொரு file-லயும் check பண்ணும்.',
+  '',
+  'ஏதேனும் doubt இருந்தால், QC Team அல்லது Team In-charge-ஐ தொடர்பு கொள்ளவும்.'
+].join('\n');
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
@@ -426,6 +431,13 @@ async function executeValidation() {
       window.fullEpubPagebreak = false;
     }
 
+    const titleCheckEnabled = getActiveRuleNames().includes('titleCheck');
+    if (titleCheckEnabled) {
+      await showTitleModal();
+    } else {
+      window.expectedTitleInput = null;
+    }
+
     const results = await runValidation(selectedFileList);
     window.lastValidationResults = results;
     window.currentFolderName = document.getElementById('folderName').textContent;
@@ -693,6 +705,36 @@ function showPagebreakModal() {
 
     document.getElementById('pagebreak-cancel').onclick = () => {
       modal.hidden = true;
+      resolve(null);
+    };
+  });
+}
+
+function showTitleModal() {
+  return new Promise(resolve => {
+    const modal = document.getElementById('title-modal');
+    const input = document.getElementById('title-input');
+    const errorEl = document.getElementById('title-error');
+
+    input.value = '';
+    errorEl.hidden = true;
+    modal.hidden = false;
+    input.focus();
+
+    document.getElementById('title-confirm').onclick = () => {
+      const value = input.value.trim();
+      if (!value) {
+        errorEl.hidden = false;
+        return;
+      }
+      modal.hidden = true;
+      window.expectedTitleInput = value;
+      resolve(value);
+    };
+
+    document.getElementById('title-skip').onclick = () => {
+      modal.hidden = true;
+      window.expectedTitleInput = null;
       resolve(null);
     };
   });

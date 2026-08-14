@@ -2430,6 +2430,55 @@ function ruleTitleTagCheck(fileData) {
 }
 ruleTitleTagCheck.ruleName = 'titleTagCheck';
 
+function ruleTitleCheck(fileData) {
+  const expected = window.expectedTitleInput;
+
+  if (!expected) {
+    return {
+      name: 'titleCheck', label: 'Title Check',
+      pass: true, notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      titleCheckRows: [],
+      reason: ''
+    };
+  }
+
+  const decodeEntities = str => str
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+
+  const expectedTrimmed = expected.trim();
+  const actualTitle = decodeEntities(fileData.title || '').trim();
+
+  if (!actualTitle) {
+    return {
+      name: 'titleCheck', label: 'Title Check',
+      pass: false, notApplicable: false,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      titleCheckRows: [{ expected: expectedTrimmed, actual: '(missing)', pass: false }],
+      reason: '<title> tag is missing or empty'
+    };
+  }
+
+  const pass = actualTitle === expectedTrimmed;
+  return {
+    name: 'titleCheck', label: 'Title Check',
+    pass, notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    titleCheckRows: [{ expected: expectedTrimmed, actual: actualTitle, pass }],
+    reason: pass ? '' : `Title mismatch — expected: "${expectedTrimmed}", found: "${actualTitle}"`
+  };
+}
+ruleTitleCheck.ruleName = 'titleCheck';
+
 ruleFirstTagMarginTop.ruleName = 'firstTagMarginTop';
 ruleFmtitleMargins.ruleName    = 'fmtitleMargins';
 ruleHeadingStyles.ruleName     = 'headingStyles';
@@ -2768,3 +2817,4 @@ const RULES = [
 
 RULES.unshift(ruleStylesheetLinkCheck);
 RULES.unshift(ruleTitleTagCheck);
+RULES.unshift(ruleTitleCheck);

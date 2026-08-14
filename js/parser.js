@@ -913,6 +913,7 @@ function parseCrossFileAnchors(xhtmlText) {
     if (!hrefM) continue;
     const href = hrefM[1].trim();
     if (!href) continue;
+    if (/^(https?:|www\.)/i.test(href.trim())) continue;
     const missingHash = !href.includes('#') && /\.xhtml/i.test(href);
     if (href.includes('#')) continue;
     const text = m[2].replace(/<[^>]+>/g, '').trim();

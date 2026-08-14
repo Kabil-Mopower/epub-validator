@@ -1,6 +1,7 @@
 {
   "rules": {
-    "titleTagCheck": true,
+    "titleCheck": true,
+    "titleTagCheck": false,
     "stylesheetLinkCheck": true,
     "firstTagMarginTop": true,
     "fmtitleMargins": true,
