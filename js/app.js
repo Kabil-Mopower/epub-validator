@@ -14,7 +14,9 @@ const message = [
   '🆕 New Updates in EPUB Validator Tool:',
   '',
   '1. External URL Space Check — href-ல் space இருந்தால் error காட்டும் (e.g. www.google. com)',
+    '',
   '2. Export HTML Button — Validation report-ஐ HTML file-ஆக download செய்யலாம். Server-ல் upload செய்யும்போது இந்த report-ஐயும் Completed folder-ல் upload செய்யவும்.',
+    '',
   '3. Title Check — Validation run பண்ணும்போது ஒரு popup வரும், அதில் EPUB-ன் title-ஐ enter செய்யவும். Tool அந்த title-ஐ ஒவ்வொரு file-லயும் check பண்ணும்.',
   '',
   'ஏதேனும் doubt இருந்தால், QC Team அல்லது Team In-charge-ஐ தொடர்பு கொள்ளவும்.'
