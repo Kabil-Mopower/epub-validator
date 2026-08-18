@@ -93,6 +93,7 @@ function validateFile(fileData) {
       titleCheckRows: result.titleCheckRows || [],
       uppercaseTagAttrRows: result.uppercaseTagAttrRows || [],
       externalUrlSpaceRows: result.externalUrlSpaceRows || [],
+      fileSizeRows: result.fileSizeRows || [],
       reason: result.reason || ""
     });
   }

@@ -2771,6 +2771,35 @@ function ruleExternalUrlSpaceCheck(fileData) {
 }
 ruleExternalUrlSpaceCheck.ruleName = 'externalUrlSpaceCheck';
 
+function ruleFileSizeCheck(fileData, cssRules) {
+  if (fileData.fileSize === undefined) {
+    return {
+      name: 'fileSizeCheck',
+      label: 'File Size Check',
+      pass: true,
+      notApplicable: true,
+      firstTag: '', className: '',
+      marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+      fileSizeRows: [],
+      reason: ''
+    };
+  }
+
+  const pass = fileData.fileSize <= 300;
+
+  return {
+    name: 'fileSizeCheck',
+    label: 'File Size Check',
+    pass,
+    notApplicable: false,
+    firstTag: '', className: '',
+    marginTopValue: '', marginBottomValue: '', fontSizeValue: '',
+    fileSizeRows: [{ fileSize: fileData.fileSize, limit: 300, pass }],
+    reason: pass ? '' : `File size is ${fileData.fileSize} KB, exceeds 300KB limit`
+  };
+}
+ruleFileSizeCheck.ruleName = 'fileSizeCheck';
+
 const RULES = [
   ruleFirstTagMarginTop,
   ruleFmtitleMargins,
@@ -2812,7 +2841,8 @@ const RULES = [
   ruleListParaCheck,
   ruleMalformedAttrCheck,
   ruleUppercaseTagAttrCheck,
-  ruleExternalUrlSpaceCheck
+  ruleExternalUrlSpaceCheck,
+  ruleFileSizeCheck
 ];
 
 RULES.unshift(ruleStylesheetLinkCheck);

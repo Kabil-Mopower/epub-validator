@@ -504,6 +504,7 @@ async function runValidation(fileList) {
   const parsedFiles = [];
   for (const file of xhtmlFiles) {
     const xhtmlText   = await readFileAsText(file);
+    const fileSize     = Math.round(file.size / 1024 * 100) / 100;
     const { firstTag, firstTagClass, line: firstTagLine } = parseXhtmlFirstTag(xhtmlText);
     const headings    = parseXhtmlHeadings(xhtmlText);
     const allTags     = parseXhtmlAllTags(xhtmlText);
@@ -546,6 +547,7 @@ async function runValidation(fileList) {
 
     parsedFiles.push({
       fileName,
+      fileSize,
       expectedTitleFromJson,
       matterType: groupingSkipped ? 'unassigned' : getMatterType(fileName),
       firstTag,

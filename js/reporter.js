@@ -1309,6 +1309,25 @@ function buildRuleTable(result) {
             </tbody>
           </table>`;
       }
+    } else if (r.name === 'fileSizeCheck') {
+      if (r.pass) {
+        tableBody = `<p class="val-pass">File size within 300KB limit</p>`;
+      } else {
+        tableBody = `
+          <p class="rule-fail-text">${escapeHtml(r.reason)}</p>
+          <table class="rule-mini-table">
+            <thead><tr><th>File Size (KB)</th><th>Limit (KB)</th><th>Status</th></tr></thead>
+            <tbody>
+              ${r.fileSizeRows.map(row => `
+                <tr>
+                  <td>${escapeHtml(String(row.fileSize))}</td>
+                  <td>${escapeHtml(String(row.limit))}</td>
+                  <td><span class="status-badge ${row.pass ? 'status-pass' : 'status-fail'}">${row.pass ? 'PASS' : 'FAIL'}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+      }
     } else if (r.name === 'titleConsistencyCheck') {
       if (r.pass) {
         tableBody = `
@@ -1601,6 +1620,7 @@ const QC_RULES = [
   { name: 'malformedAttrCheck', label: 'Malformed Attribute Check', applies: 'All files', checks: 'Misspelled class= attribute in opening tags' },
   { name: 'uppercaseTagAttrCheck', label: 'Uppercase Tag/Attr Check', applies: 'All files', checks: 'Tag names and attribute names must be lowercase — values not checked' },
   { name: 'externalUrlSpaceCheck', label: 'External URL Space Check', applies: 'All matter types', checks: 'External URLs in href containing spaces' },
+  { name: 'fileSizeCheck', label: 'File Size Check', applies: 'All files', checks: 'Flags XHTML files exceeding 300KB' },
 ];
 
 function ensureRulesContinueButton() {

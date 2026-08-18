@@ -43,6 +43,7 @@
     "listParaCheck": true,
     "malformedAttrCheck": true,
     "uppercaseTagAttrCheck": true,
-    "externalUrlSpaceCheck": true
+    "externalUrlSpaceCheck": true,
+    "fileSizeCheck": true
   }
 }
